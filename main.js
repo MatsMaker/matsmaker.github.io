@@ -25,7 +25,6 @@ class FontTestPlatform {
     this.app.stage.addChild(originText);
 
     const scaleContainer = new PIXI.Container();
-    scaleContainer.x = 75;
     scaleContainer.y = 75;
     scaleContainer.scale.set(0.7);
 
@@ -34,10 +33,31 @@ class FontTestPlatform {
     this.app.stage.addChild(scaleContainer);
 
     const scaledText = this._initText("Text scaled");
-    scaledText.x = 125;
     scaledText.y = 125;
-    scaledText.scale.set(0.7)
+    scaledText.scale.set(0.7);
     this.app.stage.addChild(scaledText);
+
+    const baseText = this._initBaseText("ArialBaseText");
+    baseText.x = 200;
+    this.app.stage.addChild(baseText);
+  }
+
+  _initBaseText(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0xfaf3c1,
+      fontFamily: "Arial, sans-serif",
+      fontSize: 32,
+      align: "center",
+      stroke: 0x4c011f,
+      strokeThickness: 5,
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 3,
+      dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
   }
 
   _initText(message) {
