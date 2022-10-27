@@ -6,8 +6,8 @@ class FontTestPlatform {
 
   constructor() {
     this.app = new PIXI.Application({
-      width: 940,
-      height: 860,
+      width: 1040,
+      height: 960,
       backgroundColor: 0x00ff00,
     });
     document.body.appendChild(this.app.view);
@@ -21,7 +21,7 @@ class FontTestPlatform {
     const style = {
       fill: 0xfaf3c1,
       fontFamily: "SourceSansPro-Bold",
-      fontSize: 32,
+      fontSize: 9,
       align: "center",
       stroke: 0x4c011f,
       strokeThickness: 5,
@@ -35,51 +35,33 @@ class FontTestPlatform {
       return -25 + index * 70;
     };
 
-    const baseText = this._initBaseText("Test render - One", style);
+    const baseText = this._initBaseText("Test render - base", style);
     baseText.y = step(1);
     this.app.stage.addChild(baseText);
 
-    const doubleRender1 = this._initDoubleRender("Test render - Double", style);
-    doubleRender1.y = step(2);
-    this.app.stage.addChild(doubleRender1);
+    for (let index = 1; index < 10; index++) {
+      const fontSize = style.fontSize * index;
+      const doubleRender = this._initDoubleRender(
+        "Test render - " + fontSize,
+        { ...style, fontSize: fontSize },
+        this.md.is("iPhone")
+        // true
+      );
+      doubleRender.y = step(index);
+      this.app.stage.addChild(doubleRender);
+    }
 
-    const doubleRender2 = this._initDoubleRender("Test render - scale", {
-      ...style,
-      fontSize: style.fontSize * 2,
-    });
-    doubleRender2.y = step(3);
-    this.app.stage.addChild(doubleRender2);
-
-    const doubleRender3 = this._initDoubleRender(
-      "Test render - iPhone test",
-      style,
-      this.md.is("iPhone")
-    );
-    doubleRender3.y = step(4);
-    this.app.stage.addChild(doubleRender3);
-
-    const doubleRender4 = this._initDoubleRender(
-      "Test render - iPhone test",
-      { ...style, fontSize: style.fontSize * 2 },
-      this.md.is("iPhone")
-    );
-    doubleRender4.y = step(5);
-    this.app.stage.addChild(doubleRender4);
-
-    const doubleRender5 = this._initDoubleRender(
-      "Test render - base scale test",
-      { ...style, fontSize: style.fontSize * 5 }
-    );
-    doubleRender5.y = step(6);
-    this.app.stage.addChild(doubleRender5);
-
-    const doubleRender6 = this._initDoubleRender(
-      "Test render - iPhone test",
-      { ...style, fontSize: style.fontSize * 5 },
-      true
-    );
-    doubleRender6.y = step(8);
-    this.app.stage.addChild(doubleRender6);
+    for (let index = 1; index < 10; index++) {
+      const fontSize = style.fontSize * index;
+      const doubleRender = this._initDoubleRender(
+        "Test render base- " + fontSize,
+        { ...style, fontSize: fontSize },
+        false
+      );
+      doubleRender.x = 550;
+      doubleRender.y = step(index);
+      this.app.stage.addChild(doubleRender);
+    }
   }
 
   _initBaseText(message, styles) {
@@ -106,7 +88,7 @@ class FontTestPlatform {
 
       console.log(baseStyle, shadowStyle);
 
-      const shadowCount = 4 - Math.round((32 * 5) / shadowStyle.fontSize);
+      const shadowCount = 4; // - Math.round((32 * 5) / shadowStyle.fontSize);
       console.log(shadowStyle.fontSize, shadowCount);
       for (let index = 0; index < shadowCount; index++) {
         const shadowText = new PIXI.Text(message, shadowStyle);
