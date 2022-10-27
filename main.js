@@ -7,7 +7,7 @@ class FontTestPlatform {
   constructor() {
     this.app = new PIXI.Application({
       width: 940,
-      height: 360,
+      height: 460,
       backgroundColor: 0x00ff00,
     });
     document.body.appendChild(this.app.view);
@@ -32,7 +32,7 @@ class FontTestPlatform {
       dropShadowAngle: 0.937,
     };
     let step = function(index){
-      return -25 + index * 60;
+      return -25 + index * 70;
     };
 
     const baseText = this._initBaseText(
@@ -50,10 +50,10 @@ class FontTestPlatform {
     this.app.stage.addChild(doubleRender1);
 
     const doubleRender2 = this._initDoubleRender(
-      "Test render - scale iPhone test",
+      "Test render - scale",
       { ...style, fontSize: style.fontSize * 2 }
     );
-    doubleRender2.y = step(4);
+    doubleRender2.y = step(3);
     this.app.stage.addChild(doubleRender2);
 
 
@@ -62,7 +62,7 @@ class FontTestPlatform {
       style,
       this.md.is("iPhone")
     );
-    doubleRender3.y = step(3);
+    doubleRender3.y = step(4);
     this.app.stage.addChild(doubleRender3);
 
     const doubleRender4 = this._initDoubleRender(
