@@ -1,24 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
     <style>
-      @font-face {
-        font-family: "SourceSansPro-Bold";
-        src: url("./SourceSansPro-Bold.ttf");
+      body {
+        margin: 0px;
+        padding: 0px;
       }
     </style>
-    <link rel="stylesheet" href="style.css" />
-    <script src="pixi.min.js"></script>
-    <script src="main.js"></script>
-    <script>
-      window.onload = function () {
-        new FontTestPlatform();
-      };
-    </script>
   </head>
-  <body></body>
+  <body>
+    <canvas id="myCanvas" width="578" height="200"></canvas>
+    <script>
+      var canvas = document.getElementById("myCanvas");
+      var context = canvas.getContext("2d");
+
+      context.font = "21pt Helvetica";
+
+      context.shadowOffsetX = 3;
+      context.shadowOffsetY = 3;
+
+      context.shadowColor = "rgba(0,0,0,0.3)";
+      context.fillText("Bad shadow", 50, 120);
+
+      context.shadowBlur = 2;
+      context.strokeText("Hello world", 50,50, 240);
+    </script>
+  </body>
 </html>
