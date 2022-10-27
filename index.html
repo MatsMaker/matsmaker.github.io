@@ -7,13 +7,18 @@
     <title>Document</title>
     <style>
       @font-face {
-        font-family: SourceSansPro-Bold;
-        src: url(SourceSansPro-Bold.ttf);
+        font-family: "SourceSansPro-Bold";
+        src: url("./SourceSansPro-Bold.ttf");
       }
     </style>
     <link rel="stylesheet" href="style.css" />
     <script src="pixi.min.js"></script>
     <script src="main.js"></script>
+    <script>
+      window.onload = function () {
+        new FontTestPlatform();
+      };
+    </script>
   </head>
   <body></body>
 </html>

@@ -5,11 +5,6 @@ class FontTestPlatform {
   refs = {};
 
   constructor() {
-    window.addEventListener("load", this.init);
-  }
-
-  init = () => {
-    console.log("run");
     this.app = new PIXI.Application({
       width: 640,
       height: 360,
@@ -18,28 +13,88 @@ class FontTestPlatform {
     document.body.appendChild(this.app.view);
 
     this.draw();
-  };
+  }
 
   draw() {
     const originText = this._initText("Origin");
     this.app.stage.addChild(originText);
 
-    const scaleContainer = new PIXI.Container();
-    scaleContainer.y = 75;
-    scaleContainer.scale.set(0.7);
-
-    const parentScaledText = this._initText("Parent scaled");
-    scaleContainer.addChild(parentScaledText);
-    this.app.stage.addChild(scaleContainer);
-
-    const scaledText = this._initText("Text scaled");
-    scaledText.y = 125;
-    scaledText.scale.set(0.7);
-    this.app.stage.addChild(scaledText);
-
     const baseText = this._initBaseText("ArialBaseText");
     baseText.x = 200;
     this.app.stage.addChild(baseText);
+
+    const noStroke = this._initNoStroke("NoStroke");
+    noStroke.y = 50;
+    this.app.stage.addChild(noStroke);
+
+    const lJBevel = this._initLJBevel("lJBevel");
+    lJBevel.y = 100;
+    this.app.stage.addChild(lJBevel);
+
+    const lJRound = this._initLJBevel("lJRound");
+    lJRound.y = 150;
+    this.app.stage.addChild(lJRound);
+
+    const lJMiter = this._initLJBevel("lJMiter");
+    lJMiter.y = 2000;
+    this.app.stage.addChild(lJMiter);
+  }
+
+  _initLJMiter(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0xfaf3c1,
+      fontFamily: "SourceSansPro-Bold",
+      fontSize: 32,
+      align: "center",
+      stroke: 0x4c011f,
+      strokeThickness: 5,
+      miterLimit: 1,
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 3,
+      dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
+  }
+
+  _initLJRound(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0xfaf3c1,
+      fontFamily: "SourceSansPro-Bold",
+      fontSize: 32,
+      align: "center",
+      stroke: 0x4c011f,
+      strokeThickness: 5,
+      lineJoin: "round",
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 3,
+      dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
+  }
+
+  _initLJBevel(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0xfaf3c1,
+      fontFamily: "SourceSansPro-Bold",
+      fontSize: 32,
+      align: "center",
+      stroke: 0x4c011f,
+      strokeThickness: 5,
+      lineJoin: "bevel",
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 3,
+      dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
   }
 
   _initBaseText(message) {
@@ -54,6 +109,22 @@ class FontTestPlatform {
       dropShadowColor: 0x4c011f,
       dropShadowDistance: 3,
       dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
+  }
+
+  _initNoStroke(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0x4c011f,
+      fontFamily: "SourceSansPro-Bold",
+      fontSize: 32,
+      align: "center",
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 5,
+      dropShadowBlur: 5,
       dropShadowAngle: 0.937,
     });
     const text = new PIXI.Text(message, style);
@@ -78,5 +149,3 @@ class FontTestPlatform {
     return text;
   }
 }
-
-new FontTestPlatform();
