@@ -36,21 +36,21 @@ class FontTestPlatform {
     };
 
     const baseText = this._initBaseText(
-      "Test double quest Render - One",
+      "Test render - One",
       style
     );
     baseText.y = step(1);
     this.app.stage.addChild(baseText);
 
     const doubleRender1 = this._initDoubleRender(
-      "Test double quest Render - Double",
+      "Test render - Double",
       style
     );
     doubleRender1.y = step(2);
     this.app.stage.addChild(doubleRender1);
 
     const doubleRender2 = this._initDoubleRender(
-      "Test double quest Render - Double",
+      "Test render - scale iPhone test",
       { ...style, fontSize: style.fontSize * 2 }
     );
     doubleRender2.y = step(4);
@@ -58,7 +58,7 @@ class FontTestPlatform {
 
 
     const doubleRender3 = this._initDoubleRender(
-      "Test double quest Render - iPhone test",
+      "Test render - iPhone test",
       style,
       this.md.is("iPhone")
     );
@@ -66,7 +66,7 @@ class FontTestPlatform {
     this.app.stage.addChild(doubleRender3);
 
     const doubleRender4 = this._initDoubleRender(
-      "Test double quest Render - iPhone test",
+      "Test render - iPhone test",
       { ...style, fontSize: style.fontSize * 2 },
       this.md.is("iPhone")
     );
