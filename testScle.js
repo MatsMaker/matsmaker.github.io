@@ -30,14 +30,16 @@ class FontTestPlatform {
       dropShadowDistance: 10,
       dropShadowBlur: 9,
       dropShadowAngle: 0.937,
+    //   dropShadowAlpha: 0.5,
+    //   dropShadowColor: "#e12323",
     };
     let step = function (index) {
       return -25 + index * 70;
     };
 
-    const baseText = this._initBaseText("Test render - base", style);
-    baseText.y = step(1);
-    this.app.stage.addChild(baseText);
+    // const baseText = this._initBaseText("Test render - base", style);
+    // baseText.y = step(1);
+    // this.app.stage.addChild(baseText);
 
     for (let index = 1; index < 10; index++) {
       const fontSize = style.fontSize * index;
@@ -54,7 +56,7 @@ class FontTestPlatform {
     for (let index = 1; index < 10; index++) {
       const fontSize = style.fontSize * index;
       const doubleRender = this._initDoubleRender(
-        "Test render base- " + fontSize,
+        "Base render - " + fontSize,
         { ...style, fontSize: fontSize },
         false
       );
@@ -85,8 +87,6 @@ class FontTestPlatform {
           delete shadowStyle[key];
         }
       }
-
-      console.log(baseStyle, shadowStyle);
 
       const shadowCount = 4; // - Math.round((32 * 5) / shadowStyle.fontSize);
       console.log(shadowStyle.fontSize, shadowCount);
