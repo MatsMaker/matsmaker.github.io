@@ -61,6 +61,14 @@ class FontTestPlatform {
     );
     doubleRender3.y = 250;
     this.app.stage.addChild(doubleRender3);
+
+    const doubleRender4 = this._initDoubleRender(
+      "Test double quest Render - iPhone test",
+      { ...style, fontSize: style.fontSize * 2 },
+      this.md.is("iPhone")
+    );
+    doubleRender4.y = 300;
+    this.app.stage.addChild(doubleRender4);
   }
 
   _initBaseText(message, styles) {
