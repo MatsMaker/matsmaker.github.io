@@ -7,7 +7,7 @@ class FontTestPlatform {
   constructor() {
     this.app = new PIXI.Application({
       width: 940,
-      height: 460,
+      height: 860,
       backgroundColor: 0x00ff00,
     });
     document.body.appendChild(this.app.view);
@@ -31,31 +31,24 @@ class FontTestPlatform {
       dropShadowBlur: 9,
       dropShadowAngle: 0.937,
     };
-    let step = function(index){
+    let step = function (index) {
       return -25 + index * 70;
     };
 
-    const baseText = this._initBaseText(
-      "Test render - One",
-      style
-    );
+    const baseText = this._initBaseText("Test render - One", style);
     baseText.y = step(1);
     this.app.stage.addChild(baseText);
 
-    const doubleRender1 = this._initDoubleRender(
-      "Test render - Double",
-      style
-    );
+    const doubleRender1 = this._initDoubleRender("Test render - Double", style);
     doubleRender1.y = step(2);
     this.app.stage.addChild(doubleRender1);
 
-    const doubleRender2 = this._initDoubleRender(
-      "Test render - scale",
-      { ...style, fontSize: style.fontSize * 2 }
-    );
+    const doubleRender2 = this._initDoubleRender("Test render - scale", {
+      ...style,
+      fontSize: style.fontSize * 2,
+    });
     doubleRender2.y = step(3);
     this.app.stage.addChild(doubleRender2);
-
 
     const doubleRender3 = this._initDoubleRender(
       "Test render - iPhone test",
@@ -72,6 +65,21 @@ class FontTestPlatform {
     );
     doubleRender4.y = step(5);
     this.app.stage.addChild(doubleRender4);
+
+    const doubleRender5 = this._initDoubleRender(
+      "Test render - base scale test",
+      { ...style, fontSize: style.fontSize * 5 }
+    );
+    doubleRender5.y = step(6);
+    this.app.stage.addChild(doubleRender5);
+
+    const doubleRender6 = this._initDoubleRender(
+      "Test render - iPhone test",
+      { ...style, fontSize: style.fontSize * 5 },
+      this.md.is("iPhone")
+    );
+    doubleRender6.y = step(8);
+    this.app.stage.addChild(doubleRender6);
   }
 
   _initBaseText(message, styles) {
