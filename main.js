@@ -36,8 +36,33 @@ class FontTestPlatform {
     this.app.stage.addChild(lJRound);
 
     const lJMiter = this._initLJBevel("lJMiter");
-    lJMiter.y = 2000;
+    lJMiter.y = 200;
     this.app.stage.addChild(lJMiter);
+
+
+    const htmlText = this._initHtmlText("htmlText");
+    htmlText.x = 200;
+    htmlText.y = 200;
+    this.app.stage.addChild(htmlText);
+    
+  }
+
+  _initHtmlText(message) {
+    const style = new PIXI.TextStyle({
+      fill: 0xfaf3c1,
+      fontFamily: "Arial, sans-serif",
+      fontSize: 32,
+      align: "center",
+      stroke: 0x4c011f,
+      strokeThickness: 5,
+      dropShadow: true,
+      dropShadowColor: 0x4c011f,
+      dropShadowDistance: 3,
+      dropShadowBlur: 12,
+      dropShadowAngle: 0.937,
+    });
+    const text = new PIXI.Text(message, style);
+    return text;
   }
 
   _initLJMiter(message) {

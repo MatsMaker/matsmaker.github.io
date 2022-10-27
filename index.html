@@ -1,29 +1,72 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
+    <title>PixiJS HTMLText</title>
+    <script src="https://pixijs.download/dev/pixi-legacy.min.js"></script>
+    <script src="../dist/html-text.js"></script>
     <style>
-      body {
-        margin: 0px;
-        padding: 0px;
-      }
+        body {
+          margin: 0;
+          padding: 0;
+          background: #eee;
+          font-family: Arial, sans-serif;
+          text-align: center;
+        }
+        canvas {
+          display: block;
+          margin: 0 auto 20px;
+          position: relative;
+        }
+        #text canvas {
+          border: 1px dotted #999;
+        }
     </style>
   </head>
   <body>
-    <canvas id="myCanvas" width="578" height="200"></canvas>
+    <h1>PixiJS HTMLText Demo</h1>
+    <div id="app"></div>
+    <h2>Internal Preview</h2>
+    <div id="text"></div>
     <script>
-      var canvas = document.getElementById("myCanvas");
-      var context = canvas.getContext("2d");
+      const app = new PIXI.Application({
+        width: 800,
+        height: 500,
+        backgroundColor:0x999999,
+        resolution: window.devicePixelRatio,
+        autoStart: false,
+        autoDensity: true,
+      });
+      document.getElementById('app').appendChild(app.view);
 
-      context.font = "21pt Helvetica";
+      const style = new PIXI.TextStyle({
+        fontSize: 40,
+        align: 'justify',
+        letterSpacing: 3,
+        wordWrap: true,
+        wordWrapWidth: 600,
+        lineHeight: 48,
+        dropShadow: true,
+        dropShadowDistance: 1,
+        dropShadowAngle: Math.PI / 2,
+        dropShadowColor: '#cccccc',
+      });
 
-      context.shadowOffsetX = 3;
-      context.shadowOffsetY = 3;
+      const text = 'Lorem ipsum dolor sit amet, &#x1F680; <b>consectetur &nbsp; adipiscing elit</b>. <br> Phasellus porta&nbsp;nisi est, vitae <i>sagittis ex gravida ac</i>. Sed vitae malesuada neque.';
 
-      context.shadowColor = "rgba(0,0,0,0.3)";
-      context.fillText("Bad shadow", 50, 120);
+      const text2 = new PIXI.HTMLText(text, style);
+      text2.texture.baseTexture.on('update', () => app.render());
+      text2.y = 20;
+      text2.x = 20;
 
-      context.shadowBlur = 2;
-      context.strokeText("Hello world", 50,50, 240);
+      document.getElementById('text').appendChild(text2.canvas);
+
+      const rect = new PIXI.Graphics()
+        .beginFill(0, 0)
+        .lineStyle({ color: 0xff0000, width: 1, native: true })
+        .drawShape(text2.getBounds());
+
+      app.stage.addChild(rect, text2);
     </script>
   </body>
 </html>
