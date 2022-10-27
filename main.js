@@ -67,7 +67,6 @@ class FontTestPlatform {
       if (baseStyle.strokeThickness !== undefined) {
         shadowText.x += baseStyle.strokeThickness / 2;
         shadowText.y += baseStyle.strokeThickness / 2;
-        shadowText.fontWeight += baseStyle.strokeThickness * 100;
       }
 
       root.addChild(baseText);
