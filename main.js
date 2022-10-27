@@ -6,7 +6,7 @@ class FontTestPlatform {
 
   constructor() {
     this.app = new PIXI.Application({
-      width: 640,
+      width: 940,
       height: 360,
       backgroundColor: 0x00ff00,
     });
@@ -31,26 +31,29 @@ class FontTestPlatform {
       dropShadowBlur: 9,
       dropShadowAngle: 0.937,
     };
+    let step = function(index){
+      return -25 + index * 60;
+    };
 
     const baseText = this._initBaseText(
       "Test double quest Render - One",
       style
     );
-    baseText.y = 50;
+    baseText.y = step(1);
     this.app.stage.addChild(baseText);
 
     const doubleRender1 = this._initDoubleRender(
       "Test double quest Render - Double",
       style
     );
-    doubleRender1.y = 100;
+    doubleRender1.y = step(2);
     this.app.stage.addChild(doubleRender1);
 
     const doubleRender2 = this._initDoubleRender(
       "Test double quest Render - Double",
       { ...style, fontSize: style.fontSize * 2 }
     );
-    doubleRender2.y = 150;
+    doubleRender2.y = step(4);
     this.app.stage.addChild(doubleRender2);
 
 
@@ -59,7 +62,7 @@ class FontTestPlatform {
       style,
       this.md.is("iPhone")
     );
-    doubleRender3.y = 250;
+    doubleRender3.y = step(3);
     this.app.stage.addChild(doubleRender3);
 
     const doubleRender4 = this._initDoubleRender(
@@ -67,7 +70,7 @@ class FontTestPlatform {
       { ...style, fontSize: style.fontSize * 2 },
       this.md.is("iPhone")
     );
-    doubleRender4.y = 300;
+    doubleRender4.y = step(5);
     this.app.stage.addChild(doubleRender4);
   }
 
