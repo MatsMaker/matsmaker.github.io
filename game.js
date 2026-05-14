@@ -228,5 +228,13 @@
   var canvas = document.getElementById("board");
   var scoreEl = document.getElementById("score");
   var game = new Game(canvas, scoreEl);
-  game.start();
+  var started = false;
+
+  window.wormStartGame = function () {
+    if (started) {
+      return;
+    }
+    started = true;
+    game.start();
+  };
 }());

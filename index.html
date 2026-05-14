@@ -4,16 +4,34 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Snake</title>
+  <!-- Google Ad Manager web tag: https://developers.google.com/publisher-tag/guides/get-started -->
+  <script>
+    window.googletag = window.googletag || {};
+    googletag.cmd = googletag.cmd || [];
+  </script>
+  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js" crossorigin="anonymous"></script>
   <style>
     body { margin: 0; font-family: Georgia, serif; background: #1a1a1a; color: #e0e0e0; text-align: center; }
     canvas { display: block; margin: 12px auto; border: 2px solid #444; background: #0d0d0d; }
     p { margin: 8px 0; }
+    .pre-game { padding: 24px 16px; max-width: 420px; margin: 0 auto; }
+    .pre-game .ad-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+    #div-gpt-ad-worm-prestart { min-height: 280px; margin: 16px auto; display: flex; align-items: center; justify-content: center; }
+    #ad-status { font-size: 14px; color: #aaa; }
   </style>
 </head>
 <body>
-  <p id="score">Score: 0</p>
-  <canvas id="board" width="400" height="400" aria-label="Snake game board"></canvas>
-  <p>Arrow keys to move · Eat squares · Avoid walls and yourself</p>
+  <div id="pre-game" class="pre-game">
+    <p class="ad-label">Advertisement</p>
+    <div id="div-gpt-ad-worm-prestart"></div>
+    <p id="ad-status">Loading ad…</p>
+  </div>
+  <div id="game-root" style="display: none;">
+    <p id="score">Score: 0</p>
+    <canvas id="board" width="400" height="400" aria-label="Snake game board"></canvas>
+    <p>Arrow keys to move · Eat squares · Avoid walls and yourself</p>
+  </div>
   <script src="game.js"></script>
+  <script src="ads.js"></script>
 </body>
 </html>
