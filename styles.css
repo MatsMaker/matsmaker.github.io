@@ -19,7 +19,7 @@ p {
 
 .pre-game {
   padding: 24px 16px;
-  max-width: 420px;
+  max-width: 660px;
   margin: 0 auto;
 }
 
@@ -30,12 +30,23 @@ p {
   letter-spacing: 0.06em;
 }
 
-#div-gpt-ad-snake-prestart {
-  min-height: 280px;
+#ad-container {
+  position: relative;
+  width: 640px;
+  height: 480px;
+  max-width: 100%;
   margin: 16px auto;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+#ad-video {
+  width: 100%;
+  height: 100%;
+  max-width: 640px;
+  max-height: 480px;
 }
 
 #ad-status {

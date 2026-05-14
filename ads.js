@@ -1,26 +1,30 @@
 /**
- * Google Ad Manager (GPT — Google Publisher Tag).
- * Runs after the player taps “Yes, start” on the welcome screen.
- * Replace SNAKE_GAM_AD_UNIT with your inventory path from Ad Manager.
- * Docs: https://developers.google.com/publisher-tag/guides/get-started
- * Help: https://support.google.com/admanager
+ * Google IMA SDK for video ads.
+ * Runs after the player taps "Yes, start" on the welcome screen.
+ * Using Google's test video ad tag for development/testing.
+ * Docs: https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side
+ * Test Tags: https://developers.google.com/interactive-media-ads/docs/sdks/html5/client-side/tags
  *
  * Append ?nosnakeads=1 to the page URL to skip ads (local testing only).
  */
 (function () {
   "use strict";
 
-  var SNAKE_GAM_AD_UNIT = "/6355419/Travel/Europe/France/Paris";
-  var SLOT_ELEMENT_ID = "div-gpt-ad-snake-prestart";
-  var MIN_VIEW_MS_WITH_CREATIVE = 4500;
+  // Google IMA test video ad tag - VAST format
+  var SNAKE_VIDEO_AD_TAG = "https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=";
+  var MIN_VIEW_MS_WITH_CREATIVE = 1000;
   var MIN_VIEW_MS_EMPTY = 900;
 
-  var gptSlot = null;
-  var gptListenerAttached = false;
+  var adDisplayContainer = null;
+  var adsLoader = null;
+  var adsManager = null;
+  var videoElement = null;
+  var adContainerElement = null;
   var safetyTimerId = null;
   var revealTimeoutId = null;
   var revealScheduled = false;
   var adsBusy = false;
+  var adPlaying = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -84,45 +88,107 @@
     return window.location.search.indexOf("nosnakeads=1") !== -1;
   }
 
-  function onSlotRenderEnded(event) {
-    if (!gptSlot || event.slot !== gptSlot) {
+  function onAdError(adErrorEvent) {
+    console.log("Ad error:", adErrorEvent.getError());
+    setStatus("Ad could not be loaded — starting the game shortly.");
+    if (adsManager) {
+      adsManager.destroy();
+    }
+    scheduleReveal(MIN_VIEW_MS_EMPTY);
+  }
+
+  function onAdLoaded(adEvent) {
+    var ad = adEvent.getAd();
+    if (!ad.isLinear()) {
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
       return;
     }
-    if (event.isEmpty) {
-      setStatus("No ad available — starting the game shortly.");
+    try {
+      adsManager.init(640, 480, google.ima.ViewMode.NORMAL);
+      adsManager.start();
+      adPlaying = true;
+    } catch (adError) {
+      console.log("AdsManager start error:", adError);
       scheduleReveal(MIN_VIEW_MS_EMPTY);
-    } else {
-      setStatus("Thanks for watching — the game will start in a few seconds.");
-      scheduleReveal(MIN_VIEW_MS_WITH_CREATIVE);
     }
   }
 
-  function runGpt() {
+  function onAdStarted() {
+    setStatus("Playing ad — game will start after...");
+  }
+
+  function onAdComplete() {
+    setStatus("Thanks for watching!");
+    scheduleReveal(MIN_VIEW_MS_WITH_CREATIVE);
+  }
+
+  function onAdsManagerLoaded(adsManagerLoadedEvent) {
+    var adsRenderingSettings = new google.ima.AdsRenderingSettings();
+    adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+    adsManager = adsManagerLoadedEvent.getAdsManager(videoElement, adsRenderingSettings);
+
+    adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError);
+    adsManager.addEventListener(google.ima.AdEvent.Type.LOADED, onAdLoaded);
+    adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, onAdStarted);
+    adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, onAdComplete);
+    adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, onAdComplete);
+    adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, onAdComplete);
+  }
+
+  function initIMA() {
+    videoElement = byId("ad-video");
+    adContainerElement = byId("ad-container");
+
+    if (!videoElement || !adContainerElement) {
+      console.error("Video or ad container element not found");
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
+      return;
+    }
+
+    adDisplayContainer = new google.ima.AdDisplayContainer(adContainerElement, videoElement);
+    adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+
+    adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onAdsManagerLoaded, false);
+    adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError, false);
+  }
+
+  function requestAds() {
+    if (!adsLoader) {
+      initIMA();
+    }
+
+    adDisplayContainer.initialize();
+
+    var adsRequest = new google.ima.AdsRequest();
+    adsRequest.adTagUrl = SNAKE_VIDEO_AD_TAG + Date.now();
+    adsRequest.linearAdSlotWidth = 640;
+    adsRequest.linearAdSlotHeight = 480;
+    adsRequest.nonLinearAdSlotWidth = 640;
+    adsRequest.nonLinearAdSlotHeight = 150;
+
+    adsLoader.requestAds(adsRequest);
+  }
+
+  function runVideoAd() {
     clearSafetyTimer();
     revealScheduled = false;
     cancelRevealTimer();
+    adPlaying = false;
 
     safetyTimerId = window.setTimeout(function () {
       safetyTimerId = null;
-      scheduleReveal(MIN_VIEW_MS_EMPTY);
+      if (!adPlaying) {
+        setStatus("Ad timed out — starting the game.");
+        scheduleReveal(0);
+      }
     }, 15000);
 
-    googletag.cmd.push(function () {
-      if (!gptSlot) {
-        gptSlot = googletag
-          .defineSlot(SNAKE_GAM_AD_UNIT, [[300, 250], [320, 50]], SLOT_ELEMENT_ID)
-          .addService(googletag.pubads());
-        if (!gptListenerAttached) {
-          googletag.pubads().addEventListener("slotRenderEnded", onSlotRenderEnded);
-          gptListenerAttached = true;
-        }
-        googletag.pubads().collapseEmptyDivs(true);
-        googletag.enableServices();
-        googletag.display(SLOT_ELEMENT_ID);
-      } else {
-        googletag.pubads().refresh([gptSlot]);
-      }
-    });
+    try {
+      requestAds();
+    } catch (e) {
+      console.error("Error requesting ads:", e);
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
+    }
   }
 
   function runAdsThenGame() {
@@ -131,8 +197,13 @@
       scheduleReveal(0);
       return;
     }
-    setStatus("Loading ad…");
-    runGpt();
+    if (typeof google === "undefined" || !google.ima) {
+      setStatus("IMA SDK not loaded — starting game.");
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
+      return;
+    }
+    setStatus("Loading video ad…");
+    runVideoAd();
   }
 
   window.snakeRunAdsThenStartGame = function () {
@@ -146,7 +217,12 @@
   window.snakeResetAdsFlow = function () {
     adsBusy = false;
     revealScheduled = false;
+    adPlaying = false;
     clearSafetyTimer();
     cancelRevealTimer();
+    if (adsManager) {
+      adsManager.destroy();
+      adsManager = null;
+    }
   };
 }());
