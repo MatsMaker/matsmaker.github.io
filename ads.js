@@ -1,6 +1,7 @@
 /**
  * Google Ad Manager (GPT — Google Publisher Tag).
- * Replace WORM_GAM_AD_UNIT with your inventory path from Ad Manager, e.g. /NetworkId/ad-unit-code
+ * Runs after the player taps “Yes, start” on the welcome screen.
+ * Replace WORM_GAM_AD_UNIT with your inventory path from Ad Manager.
  * Docs: https://developers.google.com/publisher-tag/guides/get-started
  * Help: https://support.google.com/admanager
  *
@@ -13,6 +14,8 @@
   var SLOT_ELEMENT_ID = "div-gpt-ad-worm-prestart";
   var MIN_VIEW_MS_WITH_CREATIVE = 4500;
   var MIN_VIEW_MS_EMPTY = 900;
+
+  var flowStarted = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -41,7 +44,6 @@
 
   function scheduleStart(delayMs) {
     window.setTimeout(function () {
-      setStatus("Starting game…");
       revealGame();
     }, delayMs);
   }
@@ -79,10 +81,10 @@
           return;
         }
         if (event.isEmpty) {
-          setStatus("No fill — starting game shortly.");
+          setStatus("No ad available — starting the game shortly.");
           unlockOnce(MIN_VIEW_MS_EMPTY);
         } else {
-          setStatus("Thanks for viewing — game starts in a few seconds.");
+          setStatus("Thanks for watching — the game will start in a few seconds.");
           unlockOnce(MIN_VIEW_MS_WITH_CREATIVE);
         }
       });
@@ -93,7 +95,7 @@
     });
   }
 
-  function main() {
+  function runAdsThenGame() {
     if (skipAdsPath()) {
       setStatus("Ads skipped (dev).");
       scheduleStart(0);
@@ -103,5 +105,11 @@
     runGpt();
   }
 
-  main();
+  window.wormRunAdsThenStartGame = function () {
+    if (flowStarted) {
+      return;
+    }
+    flowStarted = true;
+    runAdsThenGame();
+  };
 }());

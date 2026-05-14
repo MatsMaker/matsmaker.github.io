@@ -237,4 +237,24 @@
     started = true;
     game.start();
   };
+
+  (function wireStartPrompt() {
+    var btn = document.getElementById("btn-start-game");
+    var welcome = document.getElementById("welcome-screen");
+    var pre = document.getElementById("pre-game");
+    if (!btn) {
+      return;
+    }
+    btn.onclick = function () {
+      if (welcome) {
+        welcome.style.display = "none";
+      }
+      if (pre) {
+        pre.style.display = "block";
+      }
+      if (typeof window.wormRunAdsThenStartGame === "function") {
+        window.wormRunAdsThenStartGame();
+      }
+    };
+  }());
 }());
