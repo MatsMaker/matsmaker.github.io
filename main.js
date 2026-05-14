@@ -12,13 +12,13 @@
   var view = new GameView(canvas, scoreEl, CELL, COLS, ROWS);
   var controller = new GameController(model, view, STEP_MS);
 
-  var started = false;
+  var gameStarted = false;
 
-  window.wormStartGame = function () {
-    if (started) {
+  window.snakeStartGame = function () {
+    if (gameStarted) {
       return;
     }
-    started = true;
+    gameStarted = true;
     controller.start();
   };
 
@@ -36,8 +36,8 @@
       if (pre) {
         pre.style.display = "block";
       }
-      if (typeof window.wormRunAdsThenStartGame === "function") {
-        window.wormRunAdsThenStartGame();
+      if (typeof window.snakeRunAdsThenStartGame === "function") {
+        window.snakeRunAdsThenStartGame();
       }
     };
   }());
