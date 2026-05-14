@@ -15,7 +15,12 @@
   var MIN_VIEW_MS_WITH_CREATIVE = 4500;
   var MIN_VIEW_MS_EMPTY = 900;
 
-  var flowStarted = false;
+  var gptSlot = null;
+  var gptListenerAttached = false;
+  var safetyTimerId = null;
+  var revealTimeoutId = null;
+  var revealScheduled = false;
+  var adsBusy = false;
 
   function byId(id) {
     return document.getElementById(id);
@@ -28,7 +33,23 @@
     }
   }
 
+  function clearSafetyTimer() {
+    if (safetyTimerId !== null) {
+      window.clearTimeout(safetyTimerId);
+      safetyTimerId = null;
+    }
+  }
+
+  function cancelRevealTimer() {
+    if (revealTimeoutId !== null) {
+      window.clearTimeout(revealTimeoutId);
+      revealTimeoutId = null;
+    }
+  }
+
   function revealGame() {
+    clearSafetyTimer();
+    cancelRevealTimer();
     var pre = byId("pre-game");
     var root = byId("game-root");
     if (pre) {
@@ -40,10 +61,18 @@
     if (typeof window.snakeStartGame === "function") {
       window.snakeStartGame();
     }
+    adsBusy = false;
+    revealScheduled = false;
   }
 
-  function scheduleStart(delayMs) {
-    window.setTimeout(function () {
+  function scheduleReveal(delayMs) {
+    if (revealScheduled) {
+      return;
+    }
+    revealScheduled = true;
+    clearSafetyTimer();
+    revealTimeoutId = window.setTimeout(function () {
+      revealTimeoutId = null;
       revealGame();
     }, delayMs);
   }
@@ -55,50 +84,51 @@
     return window.location.search.indexOf("nosnakeads=1") !== -1;
   }
 
-  function runGpt() {
-    var slot;
-    var unlockScheduled = false;
-
-    function unlockOnce(delayMs) {
-      if (unlockScheduled) {
-        return;
-      }
-      unlockScheduled = true;
-      scheduleStart(delayMs);
+  function onSlotRenderEnded(event) {
+    if (!gptSlot || event.slot !== gptSlot) {
+      return;
     }
+    if (event.isEmpty) {
+      setStatus("No ad available — starting the game shortly.");
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
+    } else {
+      setStatus("Thanks for watching — the game will start in a few seconds.");
+      scheduleReveal(MIN_VIEW_MS_WITH_CREATIVE);
+    }
+  }
 
-    window.setTimeout(function () {
-      unlockOnce(MIN_VIEW_MS_EMPTY);
+  function runGpt() {
+    clearSafetyTimer();
+    revealScheduled = false;
+    cancelRevealTimer();
+
+    safetyTimerId = window.setTimeout(function () {
+      safetyTimerId = null;
+      scheduleReveal(MIN_VIEW_MS_EMPTY);
     }, 15000);
 
     googletag.cmd.push(function () {
-      slot = googletag
-        .defineSlot(SNAKE_GAM_AD_UNIT, [[300, 250], [320, 50]], SLOT_ELEMENT_ID)
-        .addService(googletag.pubads());
-
-      googletag.pubads().addEventListener("slotRenderEnded", function (event) {
-        if (!slot || event.slot !== slot) {
-          return;
+      if (!gptSlot) {
+        gptSlot = googletag
+          .defineSlot(SNAKE_GAM_AD_UNIT, [[300, 250], [320, 50]], SLOT_ELEMENT_ID)
+          .addService(googletag.pubads());
+        if (!gptListenerAttached) {
+          googletag.pubads().addEventListener("slotRenderEnded", onSlotRenderEnded);
+          gptListenerAttached = true;
         }
-        if (event.isEmpty) {
-          setStatus("No ad available — starting the game shortly.");
-          unlockOnce(MIN_VIEW_MS_EMPTY);
-        } else {
-          setStatus("Thanks for watching — the game will start in a few seconds.");
-          unlockOnce(MIN_VIEW_MS_WITH_CREATIVE);
-        }
-      });
-
-      googletag.pubads().collapseEmptyDivs(true);
-      googletag.enableServices();
-      googletag.display(SLOT_ELEMENT_ID);
+        googletag.pubads().collapseEmptyDivs(true);
+        googletag.enableServices();
+        googletag.display(SLOT_ELEMENT_ID);
+      } else {
+        googletag.pubads().refresh([gptSlot]);
+      }
     });
   }
 
   function runAdsThenGame() {
     if (skipAdsPath()) {
       setStatus("Ads skipped (dev).");
-      scheduleStart(0);
+      scheduleReveal(0);
       return;
     }
     setStatus("Loading ad…");
@@ -106,10 +136,17 @@
   }
 
   window.snakeRunAdsThenStartGame = function () {
-    if (flowStarted) {
+    if (adsBusy) {
       return;
     }
-    flowStarted = true;
+    adsBusy = true;
     runAdsThenGame();
+  };
+
+  window.snakeResetAdsFlow = function () {
+    adsBusy = false;
+    revealScheduled = false;
+    clearSafetyTimer();
+    cancelRevealTimer();
   };
 }());

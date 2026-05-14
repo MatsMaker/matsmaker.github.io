@@ -99,6 +99,13 @@
     return new Point(0, 0);
   };
 
+  GameModel.prototype.clear = function () {
+    this.snake = null;
+    this.food = null;
+    this.score = 0;
+    this.running = false;
+  };
+
   GameModel.prototype.reset = function () {
     this.snake = new Snake(
       Math.floor(this.cols / 2),

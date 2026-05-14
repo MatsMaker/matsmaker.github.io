@@ -54,7 +54,7 @@
       ctx.font = "20px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(
-        "Game over — refresh to play again",
+        "Game over — press Backspace for start screen",
         this.canvas.width / 2,
         this.canvas.height / 2
       );

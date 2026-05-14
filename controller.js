@@ -10,10 +10,23 @@
     this.boundLoop = this.loop.bind(this);
     this.boundKeydown = this.onKeydown.bind(this);
     this.inputAttached = false;
+    this.loopActive = false;
+    this.onReturnToWelcome = null;
   }
 
   GameController.prototype.onKeydown = function (e) {
     var key = e.keyCode;
+    if (key === 8) {
+      e.preventDefault();
+      if (!this.model.running && this.model.snake) {
+        this.pauseForMenu();
+        this.model.clear();
+        if (typeof this.onReturnToWelcome === "function") {
+          this.onReturnToWelcome();
+        }
+      }
+      return;
+    }
     if (!this.model.running) {
       return;
     }
@@ -33,6 +46,9 @@
   };
 
   GameController.prototype.loop = function (now) {
+    if (!this.loopActive) {
+      return;
+    }
     if (this.lastTick === 0) {
       this.lastTick = now;
     }
@@ -46,7 +62,12 @@
     window.requestAnimationFrame(this.boundLoop);
   };
 
+  GameController.prototype.pauseForMenu = function () {
+    this.loopActive = false;
+  };
+
   GameController.prototype.start = function () {
+    this.loopActive = true;
     this.model.reset();
     this.lastTick = 0;
     this.accum = 0;
