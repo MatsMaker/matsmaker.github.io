@@ -57,10 +57,10 @@
   function revealGame() {
     clearSafetyTimer();
     cancelRevealTimer();
-    var pre = byId("pre-game");
-    var root = byId("game-root");
-    if (pre) {
-      pre.style.display = "none";
+    var uiRoot = document.getElementById("ui-root");
+    var root = document.getElementById("game-root");
+    if (uiRoot) {
+      uiRoot.innerHTML = "";
     }
     if (root) {
       root.style.display = "block";

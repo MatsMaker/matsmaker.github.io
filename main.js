@@ -5,7 +5,7 @@
     cell: 20,
     cols: 20,
     rows: 20,
-    stepMs: 120,
+    stepMs: 600,
     canvasId: "board",
     scoreId: "score",
     startButtonId: "btn-start-game",

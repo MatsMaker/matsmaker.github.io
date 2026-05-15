@@ -6,26 +6,48 @@
   <title>Snake</title>
   <!-- Google IMA SDK for video ads: https://developers.google.com/interactive-media-ads -->
   <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+  <link rel="reset" href="reset.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="welcome-screen" class="start-prompt">
-    <p>Start the game?</p>
-    <button type="button" id="btn-start-game">Yes, start</button>
-    <button type="button" id="btn-cancel-game">No, thanks</button>
-  </div>
-  <div id="pre-game" class="pre-game">
-    <p class="ad-label">Advertisement</p>
-    <div id="ad-container">
-      <video id="ad-video" playsinline></video>
-    </div>
-    <p id="ad-status">Loading ad…</p>
-  </div>
+
   <div id="game-root">
     <p id="score">Score: 0</p>
     <canvas id="board" width="400" height="400" aria-label="Snake game board"></canvas>
-    <p>Arrow keys to move · Eat squares · Avoid walls and yourself · After game over, Backspace returns to start (then Yes → ad → play)</p>
   </div>
+  <div id="ui-root"></div>
+
+  <template id="welcome-screen">
+    <div class="start-prompt base">
+      <p>Start the game?</p>
+      <button type="button" id="btn-start-game" class="btn-green">Yes, start</button>
+      <button type="button" id="btn-cancel-game" class="btn-red">No, thanks</button>
+      <button type="button" id="btn-help-game" class="btn-white">How to play</button>
+    </div>
+  </template>
+  <template id="help-game">
+    <div class="help-prompt base">
+      <h3>How to Play</h3>
+      <ul>
+        <li>Use <strong>Arrow keys</strong> to move the snake</li>
+        <li>Eat red squares to grow and score points</li>
+        <li>Avoid hitting walls and yourself</li>
+        <li>After game over, press <strong>Backspace</strong> to return to start</li>
+        <li>Then click Yes → watch ad → play again</li>
+      </ul>
+      <button type="button" id="btn-back-from-help" class="btn-white">Back</button>
+    </div>
+  </template>
+  <template id="pre-game">
+    <div class="pre-game">
+      <p class="ad-label">Advertisement</p>
+      <div id="ad-container">
+        <video id="ad-video" playsinline></video>
+      </div>
+      <p id="ad-status">Loading ad…</p>
+    </div>
+  </template>
+
   <script src="model.js"></script>
   <script src="view.js"></script>
   <script src="controller.js"></script>
