@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ad Test</title>
+  <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+  <style>
+    body { background: #222; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
+    #ad-container { width: 640px; height: 480px; margin: 20px auto; background: #000; }
+    video { width: 100%; height: 100%; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Video Ad Test</h1>
+  <p>Testing different Google IMA ad tags</p>
+  <button onclick="testAd1()">Test Ad 1 (Original)</button>
+  <button onclick="testAd2()">Test Ad 2 (Skippable)</button>
+  <button onclick="testAd3()">Test Ad 3 (VMAP)</button>
+  <div id="ad-container">
+    <video id="ad-video" controls playsinline></video>
+  </div>
+  <div id="status">Click a button to test</div>
+  
+  <script>
+    var adDisplayContainer, adsLoader, adsManager;
+    var videoElement = document.getElementById('ad-video');
+    var adContainerElement = document.getElementById('ad-container');
+    
+    function log(msg) {
+      console.log(msg);
+      document.getElementById('status').innerHTML += '<br>' + msg;
+    }
+    
+    function cleanup() {
+      if (adsManager) {
+        adsManager.destroy();
+        adsManager = null;
+      }
+    }
+    
+    function testAd(tagUrl, name) {
+      cleanup();
+      document.getElementById('status').innerHTML = 'Testing: ' + name;
+      log('Requesting ad...');
+      
+      adDisplayContainer = new google.ima.AdDisplayContainer(adContainerElement, videoElement);
+      adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+      
+      adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, function(e) {
+        log('✅ Ad loaded!');
+        adsManager = e.getAdsManager(videoElement);
+        
+        adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, function(e) {
+          log('❌ Ad error: ' + e.getError().getMessage());
+        });
+        
+        adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, function() {
+          log('▶️ Ad started playing!');
+        });
+        
+        adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, function() {
+          log('✅ Ad completed!');
+        });
+        
+        try {
+          adDisplayContainer.initialize();
+          adsManager.init(640, 480, google.ima.ViewMode.NORMAL);
+          adsManager.start();
+        } catch (e) {
+          log('❌ Error starting ad: ' + e);
+        }
+      });
+      
+      adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, function(e) {
+        log('❌ Ad load error: ' + e.getError().getMessage());
+      });
+      
+      var adsRequest = new google.ima.AdsRequest();
+      adsRequest.adTagUrl = tagUrl;
+      adsRequest.linearAdSlotWidth = 640;
+      adsRequest.linearAdSlotHeight = 480;
+      
+      adsLoader.requestAds(adsRequest);
+    }
+    
+    function testAd1() {
+      testAd('https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=' + Date.now(), 'Original Test Tag');
+    }
+    
+    function testAd2() {
+      testAd('https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dskippablelinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=' + Date.now(), 'Skippable Ad');
+    }
+    
+    function testAd3() {
+      testAd('https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/vmap_ad_samples&sz=640x480&cust_params=sample_ar%3Dpremidpost&ciu_szs=300x250&gdfp_req=1&ad_rule=1&output=vmap&unviewed_position_start=1&env=vp&impl=s&correlator=' + Date.now(), 'VMAP Ad');
+    }
+  </script>
+</body>
+</html>

@@ -73,6 +73,17 @@
     };
   };
 
+  Game.prototype.bindCancelButton = function () {
+    var cancelBtn = document.getElementById("btn-cancel-game");
+    if (!cancelBtn) {
+      return;
+    }
+    cancelBtn.onclick = function () {
+      // Just close the page or hide welcome
+      document.getElementById("welcome-screen").style.display = "none";
+    };
+  };
+
   Game.prototype.init = function () {
     var self = this;
     this.model = new GameModel(this.cols, this.rows);
@@ -91,6 +102,7 @@
       self.startFromAds();
     };
     this.bindStartButton();
+    this.bindCancelButton();
   };
 
   global.Game = Game;
