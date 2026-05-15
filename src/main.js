@@ -1,6 +1,17 @@
-(function () {
-  "use strict";
+"use strict";
 
+// Import CSS
+import '../static/reset.css';
+import '../static/styles.css';
+
+// Import ads module (IIFE that exports to window)
+import './ads.js';
+
+// Import Game class
+import { Game } from './game.js';
+
+// Initialize game when DOM is loaded
+(function () {
   var game = new Game({
     cell: 20,
     cols: 20,
