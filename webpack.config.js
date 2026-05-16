@@ -1,17 +1,33 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const ESLintPlugin = require('eslint-webpack-plugin');
+const path = typeof require !== 'undefined' ? require('path') : null;
+const HtmlWebpackPlugin = typeof require !== 'undefined' ? require('html-webpack-plugin') : null;
+const CopyWebpackPlugin = typeof require !== 'undefined' ? require('copy-webpack-plugin') : null;
+const ESLintPlugin = typeof require !== 'undefined' ? require('eslint-webpack-plugin') : null;
 
 module.exports = {
-  entry: './src/main.js',
+  entry: './src/main.ts',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true
   },
+  resolve: {
+    extensions: ['.ts', '.js'],
+    alias: {
+      '@static': path.resolve(__dirname, 'static')
+    }
+  },
   module: {
     rules: [
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            transpileOnly: true
+          }
+        }
+      },
       {
         test: /\.js$/,
         exclude: /node_modules/,
@@ -22,12 +38,16 @@ module.exports = {
       {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader']
+      },
+      {
+        test: /\.s[ac]ss$/i,
+        use: ['style-loader', 'css-loader', 'sass-loader']
       }
     ]
   },
   plugins: [
     new ESLintPlugin({
-      extensions: ['js'],
+      extensions: ['ts', 'js'],
       failOnError: true,
       failOnWarning: false,
       emitError: true,

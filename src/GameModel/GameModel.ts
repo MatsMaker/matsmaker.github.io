@@ -1,8 +1,15 @@
-import { Point } from './Point.js';
-import { Snake } from './Snake.js';
+import { Point } from './Point';
+import { Snake } from './Snake';
 
-class GameModel {
-  constructor(cols, rows) {
+export class GameModel {
+  cols: number;
+  rows: number;
+  snake: Snake | null;
+  food: Point | null;
+  score: number;
+  running: boolean;
+
+  constructor(cols: number, rows: number) {
     this.cols = cols;
     this.rows = rows;
     this.snake = null;
@@ -11,7 +18,11 @@ class GameModel {
     this.running = false;
   }
 
-  randomEmptyCell() {
+  randomEmptyCell(): Point {
+    if (!this.snake) {
+      return new Point(0, 0);
+    }
+    
     for (let tries = 0; tries < 500; tries++) {
       const x = Math.floor(Math.random() * this.cols);
       const y = Math.floor(Math.random() * this.rows);
@@ -23,14 +34,14 @@ class GameModel {
     return new Point(0, 0);
   }
 
-  clear() {
+  clear(): void {
     this.snake = null;
     this.food = null;
     this.score = 0;
     this.running = false;
   }
 
-  reset() {
+  reset(): void {
     this.snake = new Snake(
       Math.floor(this.cols / 2),
       Math.floor(this.rows / 2),
@@ -41,13 +52,13 @@ class GameModel {
     this.running = true;
   }
 
-  queueDirection(dx, dy) {
+  queueDirection(dx: number, dy: number): void {
     if (this.snake) {
       this.snake.queueDirection(dx, dy);
     }
   }
 
-  step() {
+  step(): void {
     if (!this.running || !this.snake) {
       return;
     }
@@ -61,12 +72,10 @@ class GameModel {
       this.running = false;
       return;
     }
-    if (head.equals(this.food)) {
+    if (this.food && head.equals(this.food)) {
       this.snake.grow(1);
       this.score += 1;
       this.food = this.randomEmptyCell();
     }
   }
 }
-
-export default GameModel;

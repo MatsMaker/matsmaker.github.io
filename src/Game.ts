@@ -1,24 +1,43 @@
-import GameModel from './GameModel/GameModel.js';
-import GameView from './GameView.js';
-import GameController from './GameController.js';
+import { GameModel } from './GameModel/GameModel';
+import { GameView } from './GameView';
+import GameController from './GameController';
+
+interface GameOptions {
+  cell?: number;
+  cols?: number;
+  rows?: number;
+  stepMs?: number;
+  canvasId?: string;
+  scoreId?: string;
+  startButtonId?: string;
+  welcomeId?: string;
+  preGameId?: string;
+  gameRootId?: string;
+  uiRootId?: string;
+}
 
 /**
  * Facade over Model + View + Controller: DOM wiring, ads bridge, welcome flow.
- * @param {Object} options
- * @param {number} [options.cell]
- * @param {number} [options.cols]
- * @param {number} [options.rows]
- * @param {number} [options.stepMs]
- * @param {string} [options.canvasId]
- * @param {string} [options.scoreId]
- * @param {string} [options.startButtonId]
- * @param {string} [options.welcomeId]
- * @param {string} [options.preGameId]
- * @param {string} [options.gameRootId]
- * @param {string} [options.uiRootId]
  */
 class Game {
-  constructor(options = {}) {
+  cell: number;
+  cols: number;
+  rows: number;
+  stepMs: number;
+  canvasId: string;
+  scoreId: string;
+  startButtonId: string;
+  welcomeId: string;
+  preGameId: string;
+  gameRootId: string;
+  uiRootId: string;
+  model: GameModel | null;
+  view: GameView | null;
+  controller: GameController | null;
+  private _playStarted: boolean;
+  private _currentUIClone: Element | null;
+
+  constructor(options: GameOptions = {}) {
     this.cell = options.cell ?? 20;
     this.cols = options.cols ?? 20;
     this.rows = options.rows ?? 20;
@@ -37,7 +56,7 @@ class Game {
     this._currentUIClone = null;
   }
 
-  _clearUIRoot() {
+  private _clearUIRoot(): void {
     const uiRoot = document.getElementById(this.uiRootId);
     if (uiRoot) {
       uiRoot.innerHTML = '';
@@ -45,9 +64,9 @@ class Game {
     this._currentUIClone = null;
   }
 
-  _showTemplate(templateId) {
+  private _showTemplate(templateId: string): Element | null {
     this._clearUIRoot();
-    const template = document.getElementById(templateId);
+    const template = document.getElementById(templateId) as HTMLTemplateElement | null;
     const uiRoot = document.getElementById(this.uiRootId);
     if (!template || !uiRoot) {
       return null;
@@ -58,14 +77,14 @@ class Game {
     return this._currentUIClone;
   }
 
-  _setDisplay(elementId, value) {
+  private _setDisplay(elementId: string, value: string): void {
     const el = document.getElementById(elementId);
     if (el) {
       el.style.display = value;
     }
   }
 
-  onReturnToWelcome() {
+  onReturnToWelcome(): void {
     if (typeof window.snakeResetAdsFlow === 'function') {
       window.snakeResetAdsFlow();
     }
@@ -77,15 +96,15 @@ class Game {
     this._playStarted = false;
   }
 
-  startFromAds() {
+  startFromAds(): void {
     if (this._playStarted) {
       return;
     }
     this._playStarted = true;
-    this.controller.start();
+    this.controller?.start();
   }
 
-  bindStartButton() {
+  bindStartButton(): void {
     const btn = document.getElementById(this.startButtonId);
     if (!btn) {
       return;
@@ -99,7 +118,7 @@ class Game {
     };
   }
 
-  bindCancelButton() {
+  bindCancelButton(): void {
     const cancelBtn = document.getElementById('btn-cancel-game');
     if (!cancelBtn) {
       return;
@@ -109,7 +128,7 @@ class Game {
     };
   }
 
-  bindHelpButton() {
+  bindHelpButton(): void {
     const helpBtn = document.getElementById('btn-help-game');
     if (!helpBtn) {
       return;
@@ -120,7 +139,7 @@ class Game {
     };
   }
 
-  bindBackFromHelpButton() {
+  bindBackFromHelpButton(): void {
     const helpContainer = document.querySelector('.help-prompt');
     if (!helpContainer) {
       return;
@@ -134,11 +153,19 @@ class Game {
     };
   }
 
-  init() {
+  init(): void {
     this.model = new GameModel(this.cols, this.rows);
+    
+    const canvas = document.getElementById(this.canvasId) as HTMLCanvasElement | null;
+    const scoreEl = document.getElementById(this.scoreId);
+    
+    if (!canvas) {
+      throw new Error(`Canvas element with id "${this.canvasId}" not found`);
+    }
+    
     this.view = new GameView(
-      document.getElementById(this.canvasId),
-      document.getElementById(this.scoreId),
+      canvas,
+      scoreEl,
       this.cell,
       this.cols,
       this.rows

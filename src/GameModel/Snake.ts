@@ -1,7 +1,14 @@
-import { Point } from './Point.js';
+import { Point } from './Point';
 
-class Snake {
-  constructor(startX, startY, length) {
+export class Snake {
+  segments: Point[];
+  dirX: number;
+  dirY: number;
+  pendingDirX: number;
+  pendingDirY: number;
+  growPending: number;
+
+  constructor(startX: number, startY: number, length: number) {
     this.segments = [];
     for (let i = 0; i < length; i++) {
       this.segments.push(new Point(startX - i, startY));
@@ -13,7 +20,7 @@ class Snake {
     this.growPending = 0;
   }
 
-  queueDirection(dx, dy) {
+  queueDirection(dx: number, dy: number): void {
     if (this.dirX + dx === 0 && this.dirY + dy === 0) {
       return;
     }
@@ -21,7 +28,7 @@ class Snake {
     this.pendingDirY = dy;
   }
 
-  step() {
+  step(): void {
     this.dirX = this.pendingDirX;
     this.dirY = this.pendingDirY;
     const head = this.segments[0];
@@ -34,15 +41,15 @@ class Snake {
     }
   }
 
-  head() {
+  head(): Point {
     return this.segments[0];
   }
 
-  grow(n = 1) {
+  grow(n: number = 1): void {
     this.growPending += n;
   }
 
-  hitsSelf() {
+  hitsSelf(): boolean {
     const h = this.head();
     for (let i = 1; i < this.segments.length; i++) {
       if (h.equals(this.segments[i])) {
@@ -52,5 +59,3 @@ class Snake {
     return false;
   }
 }
-
-export { Snake };

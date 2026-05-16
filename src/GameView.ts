@@ -1,14 +1,33 @@
-class GameView {
-  constructor(canvas, scoreEl, cell, cols, rows) {
+import { GameModel } from './GameModel/GameModel';
+
+export class GameView {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  scoreEl: HTMLElement | null;
+  cell: number;
+  cols: number;
+  rows: number;
+
+  constructor(
+    canvas: HTMLCanvasElement,
+    scoreEl: HTMLElement | null,
+    cell: number,
+    cols: number,
+    rows: number
+  ) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not get 2D rendering context');
+    }
+    this.ctx = ctx;
     this.scoreEl = scoreEl;
     this.cell = cell;
     this.cols = cols;
     this.rows = rows;
   }
 
-  render(model) {
+  render(model: GameModel): void {
     const ctx = this.ctx;
     if (!model || !model.snake || !model.food) {
       return;
@@ -59,5 +78,3 @@ class GameView {
     }
   }
 }
-
-export default GameView;

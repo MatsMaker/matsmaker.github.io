@@ -1,5 +1,19 @@
-class GameController {
-  constructor(model, view, stepMs = 120) {
+import { GameModel } from './GameModel/GameModel';
+import { GameView } from './GameView';
+
+export default class GameController {
+  model: GameModel;
+  view: GameView;
+  stepMs: number;
+  lastTick: number;
+  accum: number;
+  boundLoop: (now: number) => void;
+  boundKeydown: (e: KeyboardEvent) => void;
+  inputAttached: boolean;
+  loopActive: boolean;
+  onReturnToWelcome: (() => void) | null;
+
+  constructor(model: GameModel, view: GameView, stepMs: number = 120) {
     this.model = model;
     this.view = view;
     this.stepMs = stepMs;
@@ -12,7 +26,7 @@ class GameController {
     this.onReturnToWelcome = null;
   }
 
-  onKeydown(e) {
+  onKeydown(e: KeyboardEvent): void {
     const key = e.keyCode;
     if (key === 8) {
       e.preventDefault();
@@ -43,7 +57,7 @@ class GameController {
     }
   }
 
-  loop(now) {
+  loop(now: number): void {
     if (!this.loopActive) {
       return;
     }
@@ -60,11 +74,11 @@ class GameController {
     window.requestAnimationFrame(this.boundLoop);
   }
 
-  pauseForMenu() {
+  pauseForMenu(): void {
     this.loopActive = false;
   }
 
-  start() {
+  start(): void {
     this.loopActive = true;
     this.model.reset();
     this.lastTick = 0;
@@ -76,5 +90,3 @@ class GameController {
     window.requestAnimationFrame(this.boundLoop);
   }
 }
-
-export default GameController;
