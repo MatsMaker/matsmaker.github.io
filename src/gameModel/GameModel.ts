@@ -1,5 +1,6 @@
 import { Point } from './Point';
 import { Snake } from './Snake';
+import { GAME_CONFIG } from '../config';
 
 export class GameModel {
   cols: number;
@@ -45,7 +46,7 @@ export class GameModel {
     this.snake = new Snake(
       Math.floor(this.cols / 2),
       Math.floor(this.rows / 2),
-      3
+      GAME_CONFIG.INITIAL_SNAKE_LENGTH
     );
     this.food = this.randomEmptyCell();
     this.score = 0;

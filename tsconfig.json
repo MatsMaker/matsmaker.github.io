@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["google_interactive_media_ads_types"],
     "plugins": [
       {
         "name": "typescript-plugin-css-modules"

@@ -1,5 +1,6 @@
-import { GameModel } from './GameModel/GameModel';
+import { GameModel } from './gameModel/GameModel';
 import { GameView } from './GameView';
+import { TV_KEY_MAPPINGS, LG_WEBOS_REGISTER_KEYS } from './config';
 
 export class GameController {
   model: GameModel;
@@ -37,11 +38,12 @@ export class GameController {
     }
     
     // Map mouse button to direction (TV remote arrows)
+    const { MOUSE_BUTTONS } = TV_KEY_MAPPINGS;
     switch(e.button) {
-      case 1: this.model.queueDirection(0, -1); break; // Up
-      case 2: this.model.queueDirection(0, 1); break;  // Down
-      case 3: this.model.queueDirection(-1, 0); break; // Left
-      case 4: this.model.queueDirection(1, 0); break;  // Right
+      case MOUSE_BUTTONS.UP: this.model.queueDirection(0, -1); break;
+      case MOUSE_BUTTONS.DOWN: this.model.queueDirection(0, 1); break;
+      case MOUSE_BUTTONS.LEFT: this.model.queueDirection(-1, 0); break;
+      case MOUSE_BUTTONS.RIGHT: this.model.queueDirection(1, 0); break;
     }
   }
 
@@ -52,8 +54,12 @@ export class GameController {
     // Prevent browser navigation
     e.preventDefault();
     
-    // Back button: Backspace, TV Back buttons (including LG 461, 10009, 27 for ESC)
-    if (key === 'Backspace' || key === 'Back' || key === 'XF86Back' || keyCode === 8 || keyCode === 461 || keyCode === 10009 || keyCode === 27) {
+    // Back button: Backspace, TV Back buttons
+    const { BACK_KEYS, LG_KEY_CODES } = TV_KEY_MAPPINGS;
+    const isBackKey = (BACK_KEYS as readonly string[]).includes(key) || 
+                      LG_KEY_CODES.BACK.includes(keyCode);
+    
+    if (isBackKey) {
       if (!this.model.running && this.model.snake) {
         this.pauseForMenu();
         this.model.clear();
@@ -68,19 +74,40 @@ export class GameController {
       return;
     }
     
-    // Left: Arrow keys, TV remote, and LG webOS
-    if (key === 'ArrowLeft' || key === 'Left' || key === 'MediaRewind' || keyCode === 37 || keyCode === 21 || keyCode === 4 || key === 'ColorF0Red' || keyCode === 403) {
+    // Direction keys with TV platform support
+    if (this.isLeftKey(key, keyCode)) {
       this.model.queueDirection(-1, 0);
-    // Up: Arrow keys, TV remote, and LG webOS
-    } else if (key === 'ArrowUp' || key === 'Up' || keyCode === 38 || keyCode === 19 || keyCode === 0 || key === 'ColorF1Green' || keyCode === 404) {
+    } else if (this.isUpKey(key, keyCode)) {
       this.model.queueDirection(0, -1);
-    // Right: Arrow keys, TV remote, and LG webOS
-    } else if (key === 'ArrowRight' || key === 'Right' || key === 'MediaFastForward' || keyCode === 39 || keyCode === 22 || keyCode === 5 || key === 'ColorF2Yellow' || keyCode === 405) {
+    } else if (this.isRightKey(key, keyCode)) {
       this.model.queueDirection(1, 0);
-    // Down: Arrow keys, TV remote, and LG webOS
-    } else if (key === 'ArrowDown' || key === 'Down' || keyCode === 40 || keyCode === 20 || keyCode === 1 || key === 'ColorF3Blue' || keyCode === 406) {
+    } else if (this.isDownKey(key, keyCode)) {
       this.model.queueDirection(0, 1);
     }
+  }
+
+  private isLeftKey(key: string, keyCode: number): boolean {
+    const { LG_KEY_CODES } = TV_KEY_MAPPINGS;
+    return key === 'ArrowLeft' || key === 'Left' || key === 'MediaRewind' || 
+           key === 'ColorF0Red' || LG_KEY_CODES.LEFT.includes(keyCode);
+  }
+
+  private isUpKey(key: string, keyCode: number): boolean {
+    const { LG_KEY_CODES } = TV_KEY_MAPPINGS;
+    return key === 'ArrowUp' || key === 'Up' || 
+           key === 'ColorF1Green' || LG_KEY_CODES.UP.includes(keyCode);
+  }
+
+  private isRightKey(key: string, keyCode: number): boolean {
+    const { LG_KEY_CODES } = TV_KEY_MAPPINGS;
+    return key === 'ArrowRight' || key === 'Right' || key === 'MediaFastForward' || 
+           key === 'ColorF2Yellow' || LG_KEY_CODES.RIGHT.includes(keyCode);
+  }
+
+  private isDownKey(key: string, keyCode: number): boolean {
+    const { LG_KEY_CODES } = TV_KEY_MAPPINGS;
+    return key === 'ArrowDown' || key === 'Down' || 
+           key === 'ColorF3Blue' || LG_KEY_CODES.DOWN.includes(keyCode);
   }
 
   loop(now: number): void {
@@ -141,18 +168,17 @@ export class GameController {
     const w = window as any;
     
     // webOS 3.0+
-    if (w.webOSDev && w.webOSDev.keyboardHook) {
+    if (w.webOSDev?.keyboardHook) {
       try {
-        const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Left', 'Right', 'Up', 'Down', 'ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue', 'Back', 'Enter'];
-        keys.forEach((key) => {
+        LG_WEBOS_REGISTER_KEYS.forEach((key) => {
           try { 
             w.webOSDev.keyboardHook.registerKey(key); 
           } catch { 
-            // Ignore 
+            // Ignore individual key registration failures
           }
         });
       } catch { 
-        // Ignore
+        // Ignore if keyboard hook is not available
       }
     }
     
@@ -172,6 +198,28 @@ export class GameController {
       } catch { 
         // Ignore
       }
+    }
+  }
+
+  /**
+   * Clean up event listeners and stop the game loop
+   * CRITICAL: Call this before destroying the controller to prevent memory leaks
+   */
+  destroy(): void {
+    this.pauseForMenu();
+    
+    if (this.inputAttached) {
+      const options = { capture: true };
+      
+      // Remove keyboard event listeners
+      window.removeEventListener('keydown', this.boundKeydown, options);
+      document.removeEventListener('keydown', this.boundKeydown, options);
+      
+      // Remove mouse event listeners
+      window.removeEventListener('mousedown', this.boundMouseDown, options);
+      document.removeEventListener('mousedown', this.boundMouseDown, options);
+      
+      this.inputAttached = false;
     }
   }
 }

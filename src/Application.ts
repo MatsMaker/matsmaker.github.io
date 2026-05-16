@@ -1,8 +1,9 @@
-import { GameModel } from './GameModel/GameModel';
+import { GameModel } from './gameModel/GameModel';
 import { GameView } from './GameView';
 import { GameController } from './GameController';
 import { UIController } from './UIController';
 import { AdsManager } from './AdsManager';
+import { GAME_CONFIG } from './config';
 
 interface ApplicationOptions {
   cell?: number;
@@ -37,10 +38,10 @@ export class Application {
   private _playStarted: boolean;
 
   constructor(options: ApplicationOptions = {}) {
-    this.cell = options.cell ?? 20;
-    this.cols = options.cols ?? 20;
-    this.rows = options.rows ?? 20;
-    this.stepMs = options.stepMs ?? 120;
+    this.cell = options.cell ?? GAME_CONFIG.CELL_SIZE;
+    this.cols = options.cols ?? GAME_CONFIG.GRID_COLS;
+    this.rows = options.rows ?? GAME_CONFIG.GRID_ROWS;
+    this.stepMs = options.stepMs ?? GAME_CONFIG.STEP_MS;
     this.canvasId = options.canvasId || 'board';
     this.gameRootId = options.gameRootId || 'game-root';
     this.uiRootId = options.uiRootId || 'ui-root';
@@ -72,53 +73,78 @@ export class Application {
   }
 
   init(): void {
-    this.adsManager = new AdsManager();
-    this.model = new GameModel(this.cols, this.rows);
-    
-    const canvas = document.getElementById(this.canvasId) as HTMLCanvasElement | null;
-    const scoreEl = document.getElementById(this.scoreId);
-    
-    if (!canvas) {
-      throw new Error(`Canvas element with id "${this.canvasId}" not found`);
-    }
-    
-    this.view = new GameView(
-      canvas,
-      scoreEl,
-      this.cell,
-      this.cols,
-      this.rows
-    );
-    this.controller = new GameController(this.model, this.view, this.stepMs);
-    this.controller.onReturnToWelcome = () => {
-      this.onReturnToWelcome();
-    };
-
-    // Initialize UIController with callbacks
-    this.uiController = new UIController(
-      this.uiRootId,
-      this.gameRootId,
-      {
-        onStartGame: () => {
-          this.uiController?.showPreGameScreen();
-          this.adsManager?.runAdsThenStartGame()
-            .then(() => {
-              this.startFromAds();
-            });
-        },
-        onCancelGame: () => {
-          this.uiController?.clear();
-        },
-        onShowHelp: () => {
-          this.uiController?.showHelpScreen();
-        },
-        onBackFromHelp: () => {
-          this.onReturnToWelcome();
-        }
+    try {
+      this.adsManager = new AdsManager();
+      this.model = new GameModel(this.cols, this.rows);
+      
+      const canvas = document.getElementById(this.canvasId) as HTMLCanvasElement | null;
+      const scoreEl = document.getElementById(this.scoreId);
+      
+      if (!canvas) {
+        throw new Error(`Canvas element with id "${this.canvasId}" not found`);
       }
-    );
+      
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        throw new Error(`Element with id "${this.canvasId}" is not a canvas element`);
+      }
+      
+      this.view = new GameView(
+        canvas,
+        scoreEl,
+        this.cell,
+        this.cols,
+        this.rows
+      );
+      
+      this.controller = new GameController(this.model, this.view, this.stepMs);
+      this.controller.onReturnToWelcome = () => {
+        this.onReturnToWelcome();
+      };
 
-    // Show welcome screen on init
-    this.uiController.showWelcomeScreen();
+      // Initialize UIController with callbacks
+      this.uiController = new UIController(
+        this.uiRootId,
+        this.gameRootId,
+        {
+          onStartGame: () => {
+            this.uiController?.showPreGameScreen();
+            this.adsManager?.runAdsThenStartGame()
+              .then(() => {
+                this.startFromAds();
+              })
+              .catch((error) => {
+                console.error('Ad flow failed:', error);
+                // Start game anyway if ads fail
+                this.startFromAds();
+              });
+          },
+          onCancelGame: () => {
+            this.uiController?.clear();
+          },
+          onShowHelp: () => {
+            this.uiController?.showHelpScreen();
+          },
+          onBackFromHelp: () => {
+            this.onReturnToWelcome();
+          }
+        }
+      );
+
+      // Show welcome screen on init
+      this.uiController.showWelcomeScreen();
+    } catch (error) {
+      console.error('Failed to initialize Application:', error);
+      throw error; // Re-throw to be caught by main.ts
+    }
+  }
+
+  /**
+   * Clean up resources and prevent memory leaks
+   */
+  destroy(): void {
+    this.controller?.destroy();
+    this.adsManager?.resetAdsFlow();
+    this.model?.clear();
+    this.uiController?.clear();
   }
 }

@@ -1,4 +1,4 @@
-import { GameModel } from './GameModel/GameModel';
+import { GameModel } from './gameModel/GameModel';
 
 export class GameView {
   canvas: HTMLCanvasElement;
