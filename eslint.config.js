@@ -21,7 +21,8 @@ module.exports = [
         Event: 'readonly',
         KeyboardEvent: 'readonly',
         Math: 'readonly',
-        google: 'readonly'
+        google: 'readonly',
+        alert: 'readonly'
       }
     },
     rules: {
@@ -90,7 +91,8 @@ module.exports = [
         KeyboardEvent: 'readonly',
         Math: 'readonly',
         google: 'readonly',
-        Element: 'readonly'
+        Element: 'readonly',
+        alert: 'readonly'
       }
     },
     plugins: {

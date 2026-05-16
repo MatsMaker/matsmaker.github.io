@@ -30,6 +30,9 @@ export default class GameController {
     const key = e.key;
     const keyCode = e.keyCode;
     
+    // Debug: Log all key presses to help diagnose TV remote issues
+    alert(`Key pressed: key="${key}", keyCode=${keyCode}, code="${e.code}"`);
+    
     // Back button: Backspace, TV Back buttons
     if (key === 'Backspace' || key === 'Back' || keyCode === 8 || keyCode === 461 || keyCode === 10009) {
       e.preventDefault();
@@ -94,6 +97,7 @@ export default class GameController {
     this.accum = 0;
     if (!this.inputAttached) {
       this.inputAttached = true;
+      alert('Use arrow keys or TV remote to control the snake. Press Backspace or Back button to return to the menu.');
       window.addEventListener('keydown', this.boundKeydown, false);
     }
     window.requestAnimationFrame(this.boundLoop);
