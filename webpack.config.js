@@ -6,7 +6,7 @@ const ESLintPlugin = typeof require !== 'undefined' ? require('eslint-webpack-pl
 module.exports = {
   entry: './src/main.ts',
   output: {
-    filename: 'bundle.js',
+    filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
     clean: true
   },
