@@ -7,11 +7,11 @@ import './styles.scss';
 import './ads';
 
 // Import Game class
-import Game from './Game';
+import { Application } from './Application';
 
 // Initialize game when DOM is loaded
 (() => {
-  const game = new Game({
+  const app = new Application({
     cell: 20,
     cols: 20,
     rows: 20,
@@ -19,8 +19,9 @@ import Game from './Game';
     canvasId: 'board',
     scoreId: 'score',
     startButtonId: 'btn-start-game',
-    gameRootId: 'game-root'
+    gameRootId: 'game-root',
+    uiRootId: 'ui-root'
   });
 
-  game.init();
+  app.init();
 })();

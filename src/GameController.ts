@@ -1,7 +1,7 @@
 import { GameModel } from './GameModel/GameModel';
 import { GameView } from './GameView';
 
-export default class GameController {
+export class GameController {
   model: GameModel;
   view: GameView;
   stepMs: number;

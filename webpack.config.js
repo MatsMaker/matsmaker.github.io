@@ -11,7 +11,7 @@ module.exports = {
     clean: true
   },
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js'],
     alias: {
       '@static': path.resolve(__dirname, 'static')
     }
@@ -19,7 +19,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.ts$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         use: {
           loader: 'ts-loader',
@@ -47,7 +47,7 @@ module.exports = {
   },
   plugins: [
     new ESLintPlugin({
-      extensions: ['ts', 'js'],
+      extensions: ['tsx', 'ts', 'js'],
       failOnError: true,
       failOnWarning: false,
       emitError: true,
