@@ -28,7 +28,8 @@ export default class GameController {
 
   onKeydown(e: KeyboardEvent): void {
     const key = e.keyCode;
-    if (key === 8) {
+    // Back button: Backspace (8), TV Back (461, 10009)
+    if (key === 8 || key === 461 || key === 10009) {
       e.preventDefault();
       if (!this.model.running && this.model.snake) {
         this.pauseForMenu();
@@ -42,16 +43,34 @@ export default class GameController {
     if (!this.model.running) {
       return;
     }
-    if (key === 37) {
+    // Left: Arrow Left (37), TV Left (37, 21)
+    if (key === 37 || key === 21) {
       e.preventDefault();
       this.model.queueDirection(-1, 0);
-    } else if (key === 38) {
+    // Up: Arrow Up (38), TV Up (38, 19)
+    } else if (key === 38 || key === 19) {
       e.preventDefault();
       this.model.queueDirection(0, -1);
-    } else if (key === 39) {
+    // Right: Arrow Right (39), TV Right (39, 22)
+    } else if (key === 39 || key === 22) {
       e.preventDefault();
       this.model.queueDirection(1, 0);
-    } else if (key === 40) {
+    // Down: Arrow Down (40), TV Down (40, 20)
+    } else if (key === 40 || key === 20) {
+      e.preventDefault();
+      this.model.queueDirection(0, 1);
+    // TV Color buttons for quick direction change
+    // Red (403) - Left, Green (404) - Up, Yellow (405) - Right, Blue (406) - Down
+    } else if (key === 403) {
+      e.preventDefault();
+      this.model.queueDirection(-1, 0);
+    } else if (key === 404) {
+      e.preventDefault();
+      this.model.queueDirection(0, -1);
+    } else if (key === 405) {
+      e.preventDefault();
+      this.model.queueDirection(1, 0);
+    } else if (key === 406) {
       e.preventDefault();
       this.model.queueDirection(0, 1);
     }
