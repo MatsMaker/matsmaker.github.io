@@ -3,12 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="application-name" content="Snake Game">
+  <!-- TV browser compatibility -->
+  <meta name="tizen-app-launch-mode" content="standalone">
+  <meta name="webos-app-keyboardtype" content="remote">
   <title>Snake</title>
   <!-- Google IMA SDK for video ads: https://developers.google.com/interactive-media-ads -->
   <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
   <link rel="reset" href="reset.css">
 </head>
-<body>
+<body tabindex="0" style="outline: none;">
 
   <div id="game-root">
     <p id="score">Score: 0</p>

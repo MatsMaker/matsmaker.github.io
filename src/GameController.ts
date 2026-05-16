@@ -98,7 +98,17 @@ export default class GameController {
     if (!this.inputAttached) {
       this.inputAttached = true;
       alert('Use arrow keys or TV remote to control the snake. Press Backspace or Back button to return to the menu.');
-      window.addEventListener('keydown', this.boundKeydown, false);
+      
+      // Add event listeners to both window and document for better TV browser compatibility
+      window.addEventListener('keydown', this.boundKeydown, true);
+      document.addEventListener('keydown', this.boundKeydown, true);
+      document.body.addEventListener('keydown', this.boundKeydown, true);
+      
+      // Set focus to body to ensure it receives key events
+      if (document.body) {
+        document.body.setAttribute('tabindex', '0');
+        document.body.focus();
+      }
     }
     window.requestAnimationFrame(this.boundLoop);
   }
