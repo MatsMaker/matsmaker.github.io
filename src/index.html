@@ -10,6 +10,21 @@
   <title>Snake</title>
   <!-- Google IMA SDK for video ads: https://developers.google.com/interactive-media-ads -->
   <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+  <!-- LG webOS key registration -->
+  <script>
+    (function() {
+      // Register LG webOS keys for remote control support
+      if (window.webOSDev && window.webOSDev.keyboardHook) {
+        ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Left', 'Right', 'Up', 'Down', 'Back', 'Enter', 'ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue'].forEach(function(key) {
+          try { window.webOSDev.keyboardHook.registerKey(key); } catch(e) {}
+        });
+      }
+      
+      if (window.PalmSystem) {
+        try { window.PalmSystem.keyMask = 0xFFFFFFFF; } catch(e) {}
+      }
+    })();
+  </script>
   <link rel="reset" href="reset.css">
 </head>
 <body tabindex="0" style="outline: none;">

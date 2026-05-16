@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrow Key Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .key-display {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 10px;
+            margin: 30px auto;
+            width: fit-content;
+        }
+
+        .key-box {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            transition: all 0.2s;
+        }
+
+        .key-box.active {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .key-box.up { grid-column: 2; grid-row: 1; }
+        .key-box.left { grid-column: 1; grid-row: 2; }
+        .key-box.down { grid-column: 2; grid-row: 2; }
+        .key-box.right { grid-column: 3; grid-row: 2; }
+
+        .info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-width: 400px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .label {
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .value {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .events-log {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .event-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+            padding-left: 10px;
+        }
+
+        .clear-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 5px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .focus-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid lime;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            animation: pulse 2s infinite;
+        }
+
+        .focus-indicator.lost {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: red;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Hidden input to maintain focus for TV remotes */
+        #focusInput {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body tabindex="0" style="outline: none;">
+    <!-- Hidden input that always maintains focus -->
+    <input type="text" id="focusInput" tabindex="1" autocomplete="off" />
+    
+    <div class="focus-indicator" id="focusIndicator">✓ Ready - Listening for keys</div>
+    <div class="container" id="app-root">
+        <h1>🎮 TV Remote Key Test</h1>
+        <p>Press ANY button on your TV remote - all events will be logged</p>
+        <p style="font-size: 0.9em; opacity: 0.8;">🔍 Testing: LG TV + Xiaomi TV Box S | Auto-focused + Multi-strategy</p>
+
+        <div class="key-display">
+            <div class="key-box up" id="key-up">↑</div>
+            <div class="key-box left" id="key-left">←</div>
+            <div class="key-box down" id="key-down">↓</div>
+            <div class="key-box right" id="key-right">→</div>
+        </div>
+
+        <div class="info">
+            <div class="info-row">
+                <span class="label">Last Key:</span>
+                <span class="value" id="last-key">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Key Code:</span>
+                <span class="value" id="key-code">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Event Type:</span>
+                <span class="value" id="event-type">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Timestamp:</span>
+                <span class="value" id="timestamp">-</span>
+            </div>
+        </div>
+
+        <div style="background: rgba(255, 255, 0, 0.1); padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.85em;">
+            💡 <strong>Увага:</strong> Сторінка автоматично в фокусі! Просто натисніть будь-яку кнопку на пульті.<br>
+            💡 <strong>Tip:</strong> Page auto-focused! Just press any button on remote.<br>
+            If no events appear after pressing buttons, check console (F12).
+        </div>
+
+        <div class="events-log" id="events-log">
+            <div style="opacity: 0.6;">📺 Press ANY button on your TV remote to see what events it sends...<br>Arrow keys should show keyCode 37(left) 38(up) 39(right) 40(down)</div>
+        </div>
+
+        <button class="clear-btn" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        const keyBoxes = {
+            'ArrowUp': document.getElementById('key-up'),
+            'ArrowDown': document.getElementById('key-down'),
+            'ArrowLeft': document.getElementById('key-left'),
+            'ArrowRight': document.getElementById('key-right'),
+            'Up': document.getElementById('key-up'),
+            'Down': document.getElementById('key-down'),
+            'Left': document.getElementById('key-left'),
+            'Right': document.getElementById('key-right'),
+            38: document.getElementById('key-up'),    // TV remote up
+            40: document.getElementById('key-down'),  // TV remote down
+            37: document.getElementById('key-left'),  // TV remote left
+            39: document.getElementById('key-right')  // TV remote right
+        };
+
+        const lastKeyEl = document.getElementById('last-key');
+        const keyCodeEl = document.getElementById('key-code');
+        const eventTypeEl = document.getElementById('event-type');
+        const timestampEl = document.getElementById('timestamp');
+        const eventsLogEl = document.getElementById('events-log');
+
+        let eventCount = 0;
+        let activeKeys = new Set();
+
+        // Map key codes to direction names for TV remotes
+        function getDirectionFromKeyCode(keyCode) {
+            const mapping = {
+                37: 'left', 38: 'up', 39: 'right', 40: 'down',
+                // Some TVs use these codes
+                '37': 'left', '38': 'up', '39': 'right', '40': 'down'
+            };
+            return mapping[keyCode] || null;
+        }
+
+        function handleKeyEvent(event, type) {
+            // CAPTURE ALL EVENTS - don't filter anything
+            const key = event.key || event.code || 'undefined';
+            const keyCode = event.keyCode || event.which || 0;
+            const code = event.code || 'undefined';
+            
+            // Prevent default for navigation keys
+            if (keyCode >= 37 && keyCode <= 40) {
+                event.preventDefault();
+            }
+            if (key && (key.startsWith('Arrow') || ['Up', 'Down', 'Left', 'Right'].includes(key))) {
+                event.preventDefault();
+            }
+
+            // Update info display
+            lastKeyEl.textContent = `${key} (${typeof key})`;
+            keyCodeEl.textContent = `Code: ${code} | keyCode: ${keyCode} | which: ${event.which || 'N/A'}`;
+            eventTypeEl.textContent = type;
+            timestampEl.textContent = new Date().toLocaleTimeString();
+
+            // Determine which arrow direction this is
+            let direction = null;
+            
+            // Check by key name
+            if (key === 'ArrowUp' || key === 'Up') direction = 'up';
+            else if (key === 'ArrowDown' || key === 'Down') direction = 'down';
+            else if (key === 'ArrowLeft' || key === 'Left') direction = 'left';
+            else if (key === 'ArrowRight' || key === 'Right') direction = 'right';
+            
+            // Check by key code (for TV remotes)
+            if (!direction) {
+                const dirFromCode = getDirectionFromKeyCode(keyCode);
+                if (dirFromCode) direction = dirFromCode;
+            }
+
+            // Highlight the pressed key
+            if (type === 'keydown' && direction) {
+                const keyId = `key-${direction}`;
+                const box = document.getElementById(keyId);
+                if (box) {
+                    box.classList.add('active');
+                    activeKeys.add(keyId);
+                }
+            }
+
+            // Log the event with ALL properties
+            logEvent(event, type, direction);
+        }
+
+        function handleKeyUp(event) {
+            const key = event.key || event.code || 'undefined';
+            const keyCode = event.keyCode || event.which || 0;
+            
+            // Prevent default
+            if (keyCode >= 37 && keyCode <= 40) {
+                event.preventDefault();
+            }
+            if (key && (key.startsWith('Arrow') || ['Up', 'Down', 'Left', 'Right'].includes(key))) {
+                event.preventDefault();
+            }
+
+            // Determine direction
+            let direction = null;
+            if (key === 'ArrowUp' || key === 'Up') direction = 'up';
+            else if (key === 'ArrowDown' || key === 'Down') direction = 'down';
+            else if (key === 'ArrowLeft' || key === 'Left') direction = 'left';
+            else if (key === 'ArrowRight' || key === 'Right') direction = 'right';
+            
+            if (!direction) {
+                const dirFromCode = getDirectionFromKeyCode(keyCode);
+                if (dirFromCode) direction = dirFromCode;
+            }
+
+            // Remove highlight
+            if (direction) {
+                const keyId = `key-${direction}`;
+                const box = document.getElementById(keyId);
+                if (box) {
+                    box.classList.remove('active');
+                    activeKeys.delete(keyId);
+                }
+            }
+        }
+
+        function logEvent(event, type, direction) {
+            eventCount++;
+            const entry = document.createElement('div');
+            entry.className = 'event-entry';
+            
+            // Build detailed log entry
+            const parts = [
+                `<strong>#${eventCount}</strong> ${type.toUpperCase()}`,
+                `key: "${event.key || 'undefined'}"`,
+                `code: "${event.code || 'undefined'}"`,
+                `keyCode: ${event.keyCode || 0}`,
+                `which: ${event.which || 0}`,
+                direction ? `→ ${direction.toUpperCase()}` : ''
+            ];
+            
+            entry.innerHTML = parts.join(' | ');
+            entry.style.borderLeftColor = direction ? 'lime' : 'rgba(255, 255, 255, 0.5)';
+            
+            // Insert at the beginning
+            if (eventsLogEl.children.length > 0) {
+                eventsLogEl.insertBefore(entry, eventsLogEl.firstChild);
+            } else {
+                eventsLogEl.appendChild(entry);
+            }
+
+            // Keep only last 30 entries
+            while (eventsLogEl.children.length > 30) {
+                eventsLogEl.removeChild(eventsLogEl.lastChild);
+            }
+
+            // Console log for debugging
+            console.log(`${type}:`, {
+                key: event.key,
+                code: event.code,
+                keyCode: event.keyCode,
+                which: event.which,
+                direction: direction
+            });
+        }
+
+        function clearLog() {
+            eventsLogEl.innerHTML = '<div style="opacity: 0.6;">Event log cleared. Press ANY key on your TV remote...</div>';
+            eventCount = 0;
+            ensureFocus();
+        }
+
+        // ===== AGGRESSIVE FOCUS MANAGEMENT FOR TV REMOTES =====
+        const focusInput = document.getElementById('focusInput');
+        const focusIndicator = document.getElementById('focusIndicator');
+        let focusCheckInterval;
+        let lastKeyEventTime = Date.now();
+
+        // Multi-strategy focus function
+        function ensureFocus() {
+            try {
+                // Strategy 1: Focus hidden input
+                if (focusInput) {
+                    focusInput.focus();
+                }
+                
+                // Strategy 2: Focus body
+                if (document.body) {
+                    document.body.focus();
+                }
+                
+                // Strategy 3: Focus window
+                window.focus();
+
+                const root = document.getElementById('app-root')
+                root.focus();
+                
+                // Update indicator
+                if (focusIndicator) {
+                    focusIndicator.classList.remove('lost');
+                    focusIndicator.textContent = '✓ Ready - Listening';
+                }
+            } catch (e) {
+                console.warn('Focus error:', e);
+            }
+        }
+
+        // Check focus status and update indicator
+        function checkFocusStatus() {
+            const timeSinceLastKey = Date.now() - lastKeyEventTime;
+            const activeElement = document.activeElement;
+            
+            // If no key event in 10 seconds, show warning
+            if (timeSinceLastKey > 10000 && focusIndicator) {
+                focusIndicator.classList.add('lost');
+                focusIndicator.textContent = '⚠ Waiting for input...';
+            }
+            
+            // Continuously maintain focus
+            if (activeElement !== focusInput && activeElement !== document.body) {
+                ensureFocus();
+            }
+        }
+
+        // Add event listeners on MULTIPLE targets for maximum compatibility
+        const targets = [window, document, document.documentElement, document.body];
+        
+        targets.forEach(target => {
+            if (!target) return;
+            
+            try {
+                // Keydown
+                target.addEventListener('keydown', (e) => {
+                    lastKeyEventTime = Date.now();
+                    handleKeyEvent(e, 'keydown');
+                }, true);
+                
+                // Keyup
+                target.addEventListener('keyup', (e) => {
+                    lastKeyEventTime = Date.now();
+                    handleKeyEvent(e, 'keyup');
+                    handleKeyUp(e);
+                }, true);
+                
+                // Keypress
+                target.addEventListener('keypress', (e) => {
+                    lastKeyEventTime = Date.now();
+                    handleKeyEvent(e, 'keypress');
+                }, true);
+            } catch (e) {
+                console.warn('Failed to add listener to target:', target, e);
+            }
+        });
+
+        // Special listener for hidden input
+        if (focusInput) {
+            focusInput.addEventListener('keydown', (e) => {
+                lastKeyEventTime = Date.now();
+                handleKeyEvent(e, 'keydown');
+            }, true);
+            
+            focusInput.addEventListener('keyup', (e) => {
+                lastKeyEventTime = Date.now();
+                handleKeyEvent(e, 'keyup');
+                handleKeyUp(e);
+            }, true);
+            
+            // Prevent input from losing focus
+            focusInput.addEventListener('blur', () => {
+                setTimeout(() => focusInput.focus(), 10);
+            });
+        }
+
+        // Click/touch anywhere = refocus
+        document.addEventListener('click', ensureFocus, true);
+        document.addEventListener('touchstart', ensureFocus, true);
+        document.addEventListener('mousedown', ensureFocus, true);
+
+        // Visibility change = refocus
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                setTimeout(ensureFocus, 100);
+            }
+        });
+
+        // Page show/hide = refocus
+        window.addEventListener('pageshow', ensureFocus);
+        window.addEventListener('focus', ensureFocus);
+
+        // Initialize immediately if DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM loaded - initializing focus...');
+                ensureFocus();
+                // Start continuous focus monitoring
+                focusCheckInterval = setInterval(checkFocusStatus, 500);
+            });
+        } else {
+            console.log('DOM already loaded - initializing focus...');
+            ensureFocus();
+            focusCheckInterval = setInterval(checkFocusStatus, 500);
+        }
+
+        // Window load = aggressive refocus
+        window.addEventListener('load', () => {
+            console.log('=== TV Remote Key Test READY ===');
+            console.log('Focus strategy: Multi-target with hidden input');
+            console.log('Listening on: window, document, documentElement, body, hidden input');
+            console.log('Supported key codes: 37(L) 38(U) 39(R) 40(D)');
+            
+            // Multiple refocus attempts for TV browsers
+            [0, 50, 100, 200, 300, 500, 800, 1000, 1500, 2000].forEach(delay => {
+                setTimeout(ensureFocus, delay);
+            });
+        });
+
+        // Immediate focus attempt (script execution time)
+        ensureFocus();
+        
+        console.log('TV Remote Key Test script loaded - focus active');
+
+
+        // window.addEventListener('load', () => {
+        //     const root = document.getElementById('app-root')
+        //     root.focus();
+        // })
+    </script>
+</body>
+</html>
