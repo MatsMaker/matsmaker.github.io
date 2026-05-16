@@ -2,6 +2,7 @@ import { GameModel } from './GameModel/GameModel';
 import { GameView } from './GameView';
 import { GameController } from './GameController';
 import { UIController } from './UIController';
+import { AdsManager } from './AdsManager';
 
 interface ApplicationOptions {
   cell?: number;
@@ -32,6 +33,7 @@ export class Application {
   view: GameView | null;
   controller: GameController | null;
   uiController: UIController | null;
+  protected adsManager: AdsManager | null;
   private _playStarted: boolean;
 
   constructor(options: ApplicationOptions = {}) {
@@ -50,13 +52,12 @@ export class Application {
     this.view = null;
     this.controller = null;
     this.uiController = null;
+    this.adsManager = null;
     this._playStarted = false;
   }
 
   onReturnToWelcome(): void {
-    if (typeof window.snakeResetAdsFlow === 'function') {
-      window.snakeResetAdsFlow();
-    }
+    this.adsManager?.resetAdsFlow();
     this.uiController?.showWelcomeScreen();
     this._playStarted = false;
   }
@@ -71,6 +72,7 @@ export class Application {
   }
 
   init(): void {
+    this.adsManager = new AdsManager();
     this.model = new GameModel(this.cols, this.rows);
     
     const canvas = document.getElementById(this.canvasId) as HTMLCanvasElement | null;
@@ -99,9 +101,7 @@ export class Application {
       {
         onStartGame: () => {
           this.uiController?.showPreGameScreen();
-          if (typeof window.snakeRunAdsThenStartGame === 'function') {
-            window.snakeRunAdsThenStartGame();
-          }
+          this.adsManager?.runAdsThenStartGame();
         },
         onCancelGame: () => {
           this.uiController?.clear();

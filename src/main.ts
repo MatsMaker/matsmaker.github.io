@@ -3,9 +3,6 @@
 import '@static/reset.css';
 import './styles.scss';
 
-// Import ads module (IIFE that exports to window)
-import './ads';
-
 // Import Game class
 import { Application } from './Application';
 
