@@ -1,9 +1,9 @@
-import { GameModel } from './gameModel/GameModel';
-import { GameView } from './GameView';
-import { GameController } from './GameController';
-import { UIController } from './UIController';
+import { GameModel } from './game/GameModel';
+import { GameView } from './game/GameView';
+import { GameController } from './game/GameController';
 import { AdsManager } from './AdsManager';
 import { GAME_CONFIG } from './config';
+import { UIController } from './ui/UIController';
 
 interface ApplicationOptions {
   cell?: number;

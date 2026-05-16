@@ -1,6 +1,6 @@
-import { GameModel } from './gameModel/GameModel';
+import { GameModel } from './GameModel';
 import { GameView } from './GameView';
-import { TV_KEY_MAPPINGS, LG_WEBOS_REGISTER_KEYS } from './config';
+import { TV_KEY_MAPPINGS, LG_WEBOS_REGISTER_KEYS } from '../config';
 
 export class GameController {
   model: GameModel;
