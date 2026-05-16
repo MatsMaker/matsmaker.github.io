@@ -27,9 +27,11 @@ export default class GameController {
   }
 
   onKeydown(e: KeyboardEvent): void {
-    const key = e.keyCode;
-    // Back button: Backspace (8), TV Back (461, 10009)
-    if (key === 8 || key === 461 || key === 10009) {
+    const key = e.key;
+    const keyCode = e.keyCode;
+    
+    // Back button: Backspace, TV Back buttons
+    if (key === 'Backspace' || key === 'Back' || keyCode === 8 || keyCode === 461 || keyCode === 10009) {
       e.preventDefault();
       if (!this.model.running && this.model.snake) {
         this.pauseForMenu();
@@ -40,37 +42,25 @@ export default class GameController {
       }
       return;
     }
+    
     if (!this.model.running) {
       return;
     }
-    // Left: Arrow Left (37), TV Left (37, 21)
-    if (key === 37 || key === 21) {
+    
+    // Left: Arrow keys and TV remote
+    if (key === 'ArrowLeft' || key === 'Left' || keyCode === 37 || keyCode === 21 || key === 'ColorF0Red' || keyCode === 403) {
       e.preventDefault();
       this.model.queueDirection(-1, 0);
-    // Up: Arrow Up (38), TV Up (38, 19)
-    } else if (key === 38 || key === 19) {
+    // Up: Arrow keys and TV remote
+    } else if (key === 'ArrowUp' || key === 'Up' || keyCode === 38 || keyCode === 19 || key === 'ColorF1Green' || keyCode === 404) {
       e.preventDefault();
       this.model.queueDirection(0, -1);
-    // Right: Arrow Right (39), TV Right (39, 22)
-    } else if (key === 39 || key === 22) {
+    // Right: Arrow keys and TV remote
+    } else if (key === 'ArrowRight' || key === 'Right' || keyCode === 39 || keyCode === 22 || key === 'ColorF2Yellow' || keyCode === 405) {
       e.preventDefault();
       this.model.queueDirection(1, 0);
-    // Down: Arrow Down (40), TV Down (40, 20)
-    } else if (key === 40 || key === 20) {
-      e.preventDefault();
-      this.model.queueDirection(0, 1);
-    // TV Color buttons for quick direction change
-    // Red (403) - Left, Green (404) - Up, Yellow (405) - Right, Blue (406) - Down
-    } else if (key === 403) {
-      e.preventDefault();
-      this.model.queueDirection(-1, 0);
-    } else if (key === 404) {
-      e.preventDefault();
-      this.model.queueDirection(0, -1);
-    } else if (key === 405) {
-      e.preventDefault();
-      this.model.queueDirection(1, 0);
-    } else if (key === 406) {
+    // Down: Arrow keys and TV remote
+    } else if (key === 'ArrowDown' || key === 'Down' || keyCode === 40 || keyCode === 20 || key === 'ColorF3Blue' || keyCode === 406) {
       e.preventDefault();
       this.model.queueDirection(0, 1);
     }
