@@ -101,7 +101,10 @@ export class Application {
       {
         onStartGame: () => {
           this.uiController?.showPreGameScreen();
-          this.adsManager?.runAdsThenStartGame();
+          this.adsManager?.runAdsThenStartGame()
+            .then(() => {
+              this.startFromAds();
+            });
         },
         onCancelGame: () => {
           this.uiController?.clear();
@@ -114,10 +117,6 @@ export class Application {
         }
       }
     );
-
-    window.snakeStartGame = () => {
-      this.startFromAds();
-    };
 
     // Show welcome screen on init
     this.uiController.showWelcomeScreen();

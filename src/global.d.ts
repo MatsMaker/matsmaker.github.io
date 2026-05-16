@@ -11,7 +11,6 @@ declare module '*.scss' {
 // Extend the global Window interface with custom snake game functions
 declare global {
   interface Window {
-    snakeStartGame?: () => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     google?: any;
     

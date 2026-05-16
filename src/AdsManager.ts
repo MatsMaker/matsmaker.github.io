@@ -9,64 +9,115 @@
  */
 
 export class AdsManager {
-  // Google IMA test video ad tag - VAST format
-  // NOTE: Test tags may not always have available ads - this is normal behavior
-  // For production, replace with your own Google Ad Manager ad tag
+  // ============================================================================
+  // Constants
+  // ============================================================================
+  
   private readonly SNAKE_VIDEO_AD_TAG = 'https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/single_ad_samples&sz=640x480&cust_params=sample_ct%3Dlinear&ciu_szs=300x250%2C728x90&gdfp_req=1&output=vast&unviewed_position_start=1&env=vp&impl=s&correlator=';
   private readonly MIN_VIEW_MS_WITH_CREATIVE = 1000;
   private readonly MIN_VIEW_MS_EMPTY = 900;
-  private readonly AD_REQUEST_TIMEOUT_MS = 8000; // Reduced from 15s - test ads often have no inventory
+  private readonly AD_REQUEST_TIMEOUT_MS = 8000;
 
+  // ============================================================================
+  // State
+  // ============================================================================
+  
+  // Google IMA SDK state
   private adDisplayContainer: any = null;
   private adsLoader: any = null;
   private adsManager: any = null;
   private videoElement: HTMLVideoElement | null = null;
   private adContainerElement: HTMLElement | null = null;
+
+  // Flow control state
   private safetyTimerId: number | null = null;
   private revealTimeoutId: number | null = null;
   private revealScheduled = false;
   private adsBusy = false;
   private adPlaying = false;
+  private gameStartResolve: (() => void) | null = null;
 
-  private byId(id: string): HTMLElement | null {
-    return document.getElementById(id);
+  // ============================================================================
+  // Public API
+  // ============================================================================
+
+  /**
+   * Start the ad flow, returning a Promise that resolves when ready to start game.
+   */
+  public runAdsThenStartGame(): Promise<void> {
+    if (this.adsBusy) {
+      return Promise.resolve();
+    }
+    this.adsBusy = true;
+    
+    return new Promise<void>((resolve) => {
+      this.gameStartResolve = resolve;
+      this.startAdFlow();
+    });
   }
 
-  private setStatus(text: string): void {
-    const el = this.byId('ad-status');
-    if (el) {
-      el.textContent = text;
+  /**
+   * Clean up and reset all ad state.
+   */
+  public resetAdsFlow(): void {
+    this.adsBusy = false;
+    this.revealScheduled = false;
+    this.adPlaying = false;
+    this.clearTimers();
+    
+    if (this.gameStartResolve) {
+      this.gameStartResolve = null;
+    }
+    if (this.adsManager) {
+      this.adsManager.destroy();
+      this.adsManager = null;
     }
   }
 
-  private clearSafetyTimer(): void {
-    if (this.safetyTimerId !== null) {
-      window.clearTimeout(this.safetyTimerId);
-      this.safetyTimerId = null;
+  // ============================================================================
+  // Ad Flow Control
+  // ============================================================================
+
+  private startAdFlow(): void {
+    if (this.shouldSkipAds()) {
+      console.log('Snake Ads: Skipping ads (dev mode)');
+      this.setStatus('Ads skipped (dev).');
+      this.scheduleReveal(0);
+      return;
     }
+
+    if (!this.isIMASDKAvailable()) {
+      console.error('Snake Ads: IMA SDK not loaded - check HTTPS, ad blockers, or network');
+      this.setStatus('IMA SDK not loaded — starting game.');
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+      return;
+    }
+
+    console.log('Snake Ads: Starting ad request...');
+    this.setStatus('Loading video ad…');
+    this.runVideoAd();
   }
 
-  private cancelRevealTimer(): void {
-    if (this.revealTimeoutId !== null) {
-      window.clearTimeout(this.revealTimeoutId);
-      this.revealTimeoutId = null;
+  private runVideoAd(): void {
+    this.clearTimers();
+    this.revealScheduled = false;
+    this.adPlaying = false;
+
+    this.startSafetyTimeout();
+
+    try {
+      this.requestAds();
+    } catch (e) {
+      console.error('Error requesting ads:', e);
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
     }
   }
 
   private revealGame(): void {
-    this.clearSafetyTimer();
-    this.cancelRevealTimer();
-    const uiRoot = document.getElementById('ui-root');
-    const root = document.getElementById('game-root');
-    if (uiRoot) {
-      uiRoot.innerHTML = '';
-    }
-    if (root) {
-      root.style.display = 'block';
-    }
-    if (typeof window.snakeStartGame === 'function') {
-      window.snakeStartGame();
-    }
+    this.clearTimers();
+    this.hideAdUI();
+    this.showGameUI();
+    this.resolveGameStart();
     this.adsBusy = false;
     this.revealScheduled = false;
   }
@@ -77,17 +128,155 @@ export class AdsManager {
     }
     this.revealScheduled = true;
     this.clearSafetyTimer();
+    
     this.revealTimeoutId = window.setTimeout(() => {
       this.revealTimeoutId = null;
       this.revealGame();
     }, delayMs);
   }
 
-  private skipAdsPath(): boolean {
-    if (!window.location || !window.location.search) {
-      return false;
+  // ============================================================================
+  // Google IMA SDK Integration
+  // ============================================================================
+
+  private initIMA(): void {
+    console.log('Snake Ads: Initializing IMA SDK...');
+    
+    this.videoElement = this.byId('ad-video') as HTMLVideoElement | null;
+    this.adContainerElement = this.byId('ad-container');
+
+    if (!this.videoElement || !this.adContainerElement) {
+      console.error('Video or ad container element not found');
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+      return;
     }
-    return window.location.search.indexOf('nosnakeads=1') !== -1;
+
+    const google = window.google;
+    if (!google) return;
+
+    this.adDisplayContainer = new google.ima.AdDisplayContainer(
+      this.adContainerElement,
+      this.videoElement
+    );
+    this.adsLoader = new google.ima.AdsLoader(this.adDisplayContainer);
+
+    this.attachLoaderListeners();
+    console.log('Snake Ads: IMA SDK initialized successfully');
+  }
+
+  private attachLoaderListeners(): void {
+    const google = window.google;
+    if (!google) return;
+
+    this.adsLoader.addEventListener(
+      google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      this.onAdsManagerLoaded,
+      false
+    );
+    this.adsLoader.addEventListener(
+      google.ima.AdErrorEvent.Type.AD_ERROR,
+      this.onAdError,
+      false
+    );
+  }
+
+  private requestAds(): void {
+    if (!this.adsLoader) {
+      this.initIMA();
+    }
+    
+    console.log('Snake Ads: Requesting ads from:', this.SNAKE_VIDEO_AD_TAG);
+    
+    const google = window.google;
+    if (!google) {
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+      return;
+    }
+    
+    this.initializeAdContainer();
+    
+    const adsRequest = this.createAdsRequest();
+    
+    try {
+      this.adsLoader.requestAds(adsRequest);
+      console.log('Snake Ads: Request sent, waiting for response...');
+    } catch (e) {
+      console.error('Snake Ads: Failed to request ads:', e);
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+    }
+  }
+
+  private initializeAdContainer(): void {
+    try {
+      this.adDisplayContainer.initialize();
+      console.log('Snake Ads: Ad display container initialized');
+    } catch (e) {
+      console.error('Snake Ads: Failed to initialize ad display container:', e);
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+    }
+  }
+
+  private createAdsRequest(): any {
+    const google = window.google;
+    const adsRequest = new google.ima.AdsRequest();
+    
+    adsRequest.adTagUrl = this.SNAKE_VIDEO_AD_TAG + Date.now();
+    adsRequest.linearAdSlotWidth = 640;
+    adsRequest.linearAdSlotHeight = 480;
+    adsRequest.nonLinearAdSlotWidth = 640;
+    adsRequest.nonLinearAdSlotHeight = 150;
+    
+    return adsRequest;
+  }
+
+  // ============================================================================
+  // Event Handlers
+  // ============================================================================
+
+  private onAdsManagerLoaded = (adsManagerLoadedEvent: any): void => {
+    console.log('Snake Ads: AdsManager loaded successfully');
+    const google = window.google;
+    if (!google) return;
+    
+    const adsRenderingSettings = new google.ima.AdsRenderingSettings();
+    adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
+    
+    this.adsManager = adsManagerLoadedEvent.getAdsManager(
+      this.videoElement,
+      adsRenderingSettings
+    );
+
+    this.attachAdEventListeners();
+    this.startAdsManager();
+  };
+
+  private attachAdEventListeners(): void {
+    const google = window.google;
+    if (!google) return;
+
+    this.adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this.onAdError);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.LOADED, this.onAdLoaded);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, this.onAdStarted);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, this.onAdComplete);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, this.onAdComplete);
+    this.adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, this.onAdComplete);
+    
+    console.log('Snake Ads: All event listeners attached');
+  }
+
+  private startAdsManager(): void {
+    const google = window.google;
+    if (!google) return;
+
+    try {
+      console.log('Snake Ads: Initializing and starting adsManager...');
+      this.adsManager.init(640, 480, google.ima.ViewMode.NORMAL);
+      this.adsManager.start();
+      console.log('Snake Ads: AdsManager started successfully');
+    } catch (adError) {
+      console.error('Snake Ads: Error starting adsManager:', adError);
+      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+    }
   }
 
   private onAdError = (adErrorEvent: any): void => {
@@ -95,6 +284,7 @@ export class AdsManager {
     console.error('Snake Ads: Ad error -', error.getErrorCode(), error.getMessage());
     console.error('Snake Ads: Error details:', error);
     this.setStatus('Ad could not be loaded — starting the game shortly.');
+    
     if (this.adsManager) {
       this.adsManager.destroy();
     }
@@ -104,6 +294,7 @@ export class AdsManager {
   private onAdLoaded = (adEvent: any): void => {
     const ad = adEvent.getAd();
     console.log('Snake Ads: Ad LOADED event - isLinear:', ad.isLinear());
+    
     if (!ad.isLinear()) {
       console.log('Snake Ads: Non-linear ad - skipping to game');
       this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
@@ -122,102 +313,11 @@ export class AdsManager {
     this.scheduleReveal(this.MIN_VIEW_MS_WITH_CREATIVE);
   };
 
-  private onAdsManagerLoaded = (adsManagerLoadedEvent: any): void => {
-    console.log('Snake Ads: AdsManager loaded successfully');
-    const google = window.google;
-    if (!google) return;
-    
-    const adsRenderingSettings = new google.ima.AdsRenderingSettings();
-    adsRenderingSettings.restoreCustomPlaybackStateOnAdBreakComplete = true;
-    this.adsManager = adsManagerLoadedEvent.getAdsManager(this.videoElement, adsRenderingSettings);
+  // ============================================================================
+  // Utilities & Helpers
+  // ============================================================================
 
-    this.adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this.onAdError);
-    this.adsManager.addEventListener(google.ima.AdEvent.Type.LOADED, this.onAdLoaded);
-    this.adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, this.onAdStarted);
-    this.adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, this.onAdComplete);
-    this.adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, this.onAdComplete);
-    this.adsManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, this.onAdComplete);
-    console.log('Snake Ads: All event listeners attached');
-    
-    // Start the ads manager to trigger ad events
-    try {
-      console.log('Snake Ads: Initializing and starting adsManager...');
-      this.adsManager.init(640, 480, google.ima.ViewMode.NORMAL);
-      this.adsManager.start();
-      console.log('Snake Ads: AdsManager started successfully');
-    } catch (adError) {
-      console.error('Snake Ads: Error starting adsManager:', adError);
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-    }
-  };
-
-  private initIMA(): void {
-    console.log('Snake Ads: Initializing IMA SDK...');
-    this.videoElement = this.byId('ad-video') as HTMLVideoElement | null;
-    this.adContainerElement = this.byId('ad-container');
-
-    if (!this.videoElement || !this.adContainerElement) {
-      console.error('Video or ad container element not found');
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-      return;
-    }
-
-    const google = window.google;
-    if (!google) return;
-
-    this.adDisplayContainer = new google.ima.AdDisplayContainer(this.adContainerElement, this.videoElement);
-    this.adsLoader = new google.ima.AdsLoader(this.adDisplayContainer);
-
-    this.adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, this.onAdsManagerLoaded, false);
-    this.adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, this.onAdError, false);
-    console.log('Snake Ads: IMA SDK initialized successfully');
-  }
-
-  private requestAds(): void {
-    if (!this.adsLoader) {
-      this.initIMA();
-    }
-    
-    console.log('Snake Ads: Requesting ads from:', this.SNAKE_VIDEO_AD_TAG);
-    
-    const google = window.google;
-    if (!google) {
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-      return;
-    }
-    
-    try {
-      this.adDisplayContainer.initialize();
-      console.log('Snake Ads: Ad display container initialized');
-    } catch (e) {
-      console.error('Snake Ads: Failed to initialize ad display container:', e);
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-      return;
-    }
-
-    const adsRequest = new google.ima.AdsRequest();
-    adsRequest.adTagUrl = this.SNAKE_VIDEO_AD_TAG + Date.now();
-    adsRequest.linearAdSlotWidth = 640;
-    adsRequest.linearAdSlotHeight = 480;
-    adsRequest.nonLinearAdSlotWidth = 640;
-    adsRequest.nonLinearAdSlotHeight = 150;
-
-    console.log('Snake Ads: Sending ads request to Google...');
-    try {
-      this.adsLoader.requestAds(adsRequest);
-      console.log('Snake Ads: Request sent, waiting for response...');
-    } catch (e) {
-      console.error('Snake Ads: Failed to request ads:', e);
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-    }
-  }
-
-  private runVideoAd(): void {
-    this.clearSafetyTimer();
-    this.revealScheduled = false;
-    this.cancelRevealTimer();
-    this.adPlaying = false;
-
+  private startSafetyTimeout(): void {
     this.safetyTimerId = window.setTimeout(() => {
       this.safetyTimerId = null;
       if (!this.adPlaying) {
@@ -227,50 +327,64 @@ export class AdsManager {
         this.scheduleReveal(0);
       }
     }, this.AD_REQUEST_TIMEOUT_MS);
+  }
 
-    try {
-      this.requestAds();
-    } catch (e) {
-      console.error('Error requesting ads:', e);
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
+  private clearSafetyTimer(): void {
+    if (this.safetyTimerId !== null) {
+      window.clearTimeout(this.safetyTimerId);
+      this.safetyTimerId = null;
     }
   }
 
-  private runAdsThenGame(): void {
-    if (this.skipAdsPath()) {
-      console.log('Snake Ads: Skipping ads (dev mode)');
-      this.setStatus('Ads skipped (dev).');
-      this.scheduleReveal(0);
-      return;
+  private cancelRevealTimer(): void {
+    if (this.revealTimeoutId !== null) {
+      window.clearTimeout(this.revealTimeoutId);
+      this.revealTimeoutId = null;
     }
-    if (!window.google?.ima) {
-      console.error('Snake Ads: IMA SDK not loaded - check HTTPS, ad blockers, or network');
-      this.setStatus('IMA SDK not loaded — starting game.');
-      this.scheduleReveal(this.MIN_VIEW_MS_EMPTY);
-      return;
-    }
-    console.log('Snake Ads: Starting ad request...');
-    this.setStatus('Loading video ad…');
-    this.runVideoAd();
   }
 
-  public runAdsThenStartGame(): void {
-    if (this.adsBusy) {
-      return;
-    }
-    this.adsBusy = true;
-    this.runAdsThenGame();
-  }
-
-  public resetAdsFlow(): void {
-    this.adsBusy = false;
-    this.revealScheduled = false;
-    this.adPlaying = false;
+  private clearTimers(): void {
     this.clearSafetyTimer();
     this.cancelRevealTimer();
-    if (this.adsManager) {
-      this.adsManager.destroy();
-      this.adsManager = null;
+  }
+
+  private hideAdUI(): void {
+    const uiRoot = document.getElementById('ui-root');
+    if (uiRoot) {
+      uiRoot.innerHTML = '';
+    }
+  }
+
+  private showGameUI(): void {
+    const root = document.getElementById('game-root');
+    if (root) {
+      root.style.display = 'block';
+    }
+  }
+
+  private resolveGameStart(): void {
+    if (this.gameStartResolve) {
+      this.gameStartResolve();
+      this.gameStartResolve = null;
+    }
+  }
+
+  private shouldSkipAds(): boolean {
+    return window.location?.search?.includes('nosnakeads=1') ?? false;
+  }
+
+  private isIMASDKAvailable(): boolean {
+    return !!window.google?.ima;
+  }
+
+  private byId(id: string): HTMLElement | null {
+    return document.getElementById(id);
+  }
+
+  private setStatus(text: string): void {
+    const el = this.byId('ad-status');
+    if (el) {
+      el.textContent = text;
     }
   }
 }
