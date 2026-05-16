@@ -19,8 +19,6 @@ import Game from './Game';
     canvasId: 'board',
     scoreId: 'score',
     startButtonId: 'btn-start-game',
-    welcomeId: 'welcome-screen',
-    preGameId: 'pre-game',
     gameRootId: 'game-root'
   });
 

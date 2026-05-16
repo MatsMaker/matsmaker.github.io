@@ -10,8 +10,6 @@ interface GameOptions {
   canvasId?: string;
   scoreId?: string;
   startButtonId?: string;
-  welcomeId?: string;
-  preGameId?: string;
   gameRootId?: string;
   uiRootId?: string;
 }
@@ -27,8 +25,6 @@ class Game {
   canvasId: string;
   scoreId: string;
   startButtonId: string;
-  welcomeId: string;
-  preGameId: string;
   gameRootId: string;
   uiRootId: string;
   model: GameModel | null;
@@ -43,12 +39,12 @@ class Game {
     this.rows = options.rows ?? 20;
     this.stepMs = options.stepMs ?? 120;
     this.canvasId = options.canvasId || 'board';
-    this.scoreId = options.scoreId || 'score';
-    this.startButtonId = options.startButtonId || 'btn-start-game';
-    this.welcomeId = options.welcomeId || 'welcome-screen';
-    this.preGameId = options.preGameId || 'pre-game';
     this.gameRootId = options.gameRootId || 'game-root';
     this.uiRootId = options.uiRootId || 'ui-root';
+
+    this.scoreId = options.scoreId || 'score';
+    this.startButtonId = options.startButtonId || 'btn-start-game';
+
     this.model = null;
     this.view = null;
     this.controller = null;
@@ -88,7 +84,7 @@ class Game {
     if (typeof window.snakeResetAdsFlow === 'function') {
       window.snakeResetAdsFlow();
     }
-    this._showTemplate(this.welcomeId);
+    this._showTemplate('template-welcome-screen');
     this.bindStartButton();
     this.bindCancelButton();
     this.bindHelpButton();
@@ -110,7 +106,7 @@ class Game {
       return;
     }
     btn.onclick = () => {
-      this._showTemplate(this.preGameId);
+      this._showTemplate('template-pre-game');
       this._setDisplay(this.gameRootId, 'none');
       if (typeof window.snakeRunAdsThenStartGame === 'function') {
         window.snakeRunAdsThenStartGame();
@@ -134,7 +130,7 @@ class Game {
       return;
     }
     helpBtn.onclick = () => {
-      this._showTemplate('help-game');
+      this._showTemplate('template-help-game');
       this.bindBackFromHelpButton();
     };
   }
@@ -178,7 +174,7 @@ class Game {
       this.startFromAds();
     };
     // Show welcome screen on init
-    this._showTemplate(this.welcomeId);
+    this._showTemplate('template-welcome-screen');
     this.bindStartButton();
     this.bindCancelButton();
     this.bindHelpButton();
