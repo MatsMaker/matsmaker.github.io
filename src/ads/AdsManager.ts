@@ -10,7 +10,7 @@
  * REFACTORED: Now uses modular architecture with AdFlowController and IMAAdPlayer
  */
 
-import { AdFlowController } from './ads/AdFlowController';
+import { AdFlowController } from './AdFlowController';
 
 /**
  * Simplified AdsManager facade

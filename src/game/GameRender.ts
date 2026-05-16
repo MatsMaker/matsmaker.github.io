@@ -1,6 +1,6 @@
 import { GameModel } from './GameModel';
 
-export class GameView {
+export class GameRender {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   scoreEl: HTMLElement | null;

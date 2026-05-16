@@ -1,10 +1,10 @@
 import { GameModel } from './GameModel';
-import { GameView } from './GameView';
+import { GameRender } from './GameRender';
 import { TV_KEY_MAPPINGS, LG_WEBOS_REGISTER_KEYS } from '../config';
 
 export class GameController {
   model: GameModel;
-  view: GameView;
+  view: GameRender;
   stepMs: number;
   lastTick: number;
   accum: number;
@@ -15,7 +15,7 @@ export class GameController {
   loopActive: boolean;
   onReturnToWelcome: (() => void) | null;
 
-  constructor(model: GameModel, view: GameView, stepMs: number = 120) {
+  constructor(model: GameModel, view: GameRender, stepMs: number = 120) {
     this.model = model;
     this.view = view;
     this.stepMs = stepMs;

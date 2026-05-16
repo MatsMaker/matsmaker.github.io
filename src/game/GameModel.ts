@@ -1,6 +1,5 @@
 import { Point } from './Point';
 import { Snake } from './Snake';
-import { GAME_CONFIG } from '../config';
 
 export class GameModel {
   cols: number;
@@ -9,10 +8,12 @@ export class GameModel {
   food: Point | null;
   score: number;
   running: boolean;
+  initialSnakeLength: number;
 
-  constructor(cols: number, rows: number) {
+  constructor(cols: number, rows: number, initialSnakeLength: number) {
     this.cols = cols;
     this.rows = rows;
+    this.initialSnakeLength = initialSnakeLength;
     this.snake = null;
     this.food = null;
     this.score = 0;
@@ -46,7 +47,7 @@ export class GameModel {
     this.snake = new Snake(
       Math.floor(this.cols / 2),
       Math.floor(this.rows / 2),
-      GAME_CONFIG.INITIAL_SNAKE_LENGTH
+      this.initialSnakeLength
     );
     this.food = this.randomEmptyCell();
     this.score = 0;

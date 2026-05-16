@@ -11,15 +11,18 @@ import { GAME_CONFIG, DOM_IDS } from './config';
 (() => {
   try {
     const app = new Application({
-      cell: GAME_CONFIG.CELL_SIZE,
-      cols: GAME_CONFIG.GRID_COLS,
-      rows: GAME_CONFIG.GRID_ROWS,
-      stepMs: GAME_CONFIG.STEP_MS,
-      canvasId: DOM_IDS.CANVAS,
-      scoreId: DOM_IDS.SCORE,
-      startButtonId: DOM_IDS.START_BUTTON,
-      gameRootId: DOM_IDS.GAME_ROOT,
-      uiRootId: DOM_IDS.UI_ROOT
+      game: {
+        cell: GAME_CONFIG.CELL_SIZE,
+        cols: GAME_CONFIG.GRID_COLS,
+        rows: GAME_CONFIG.GRID_ROWS,
+        stepMs: GAME_CONFIG.STEP_MS,
+        initialSnakeLength: GAME_CONFIG.INITIAL_SNAKE_LENGTH,
+      },
+      ui: {
+        canvasId: DOM_IDS.CANVAS,
+        gameRootId: DOM_IDS.GAME_ROOT,
+        uiRootId: DOM_IDS.UI_ROOT,
+      },
     });
 
     app.init();

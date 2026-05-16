@@ -19,8 +19,6 @@ export const GAME_CONFIG = {
  */
 export const DOM_IDS = {
   CANVAS: 'board',
-  SCORE: 'score',
-  START_BUTTON: 'btn-start-game',
   GAME_ROOT: 'game-root',
   UI_ROOT: 'ui-root',
 } as const;
@@ -29,18 +27,6 @@ export const DOM_IDS = {
  * TV platform key mappings for remote controls
  */
 export const TV_KEY_MAPPINGS = {
-  /** Arrow keys for all platforms */
-  ARROW_KEYS: ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'],
-  
-  /** Generic TV platform keys */
-  GENERIC_TV: ['Left', 'Right', 'Up', 'Down'],
-  
-  /** LG webOS specific keys */
-  LG_WEBOS: ['ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue'],
-  
-  /** Media control keys */
-  MEDIA_KEYS: ['MediaRewind', 'MediaFastForward'],
-  
   /** Back/Exit keys */
   BACK_KEYS: ['Backspace', 'Back', 'XF86Back'],
   

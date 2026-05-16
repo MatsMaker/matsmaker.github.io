@@ -1,65 +1,106 @@
-import { GameModel } from './game/GameModel';
-import { GameView } from './game/GameView';
-import { GameController } from './game/GameController';
-import { AdsManager } from './AdsManager';
-import { GAME_CONFIG } from './config';
-import { UIController } from './ui/UIController';
+import { AdsManager } from './ads/AdsManager';
+import { DOM_IDS, GAME_CONFIG } from './config';
+import { UIController } from './doomUI';
+import { Game } from './game';
 
-interface ApplicationOptions {
-  cell?: number;
-  cols?: number;
-  rows?: number;
-  stepMs?: number;
-  canvasId?: string;
-  scoreId?: string;
-  startButtonId?: string;
-  gameRootId?: string;
-  uiRootId?: string;
+/**
+ * Game-specific configuration options
+ */
+export interface GameOptions {
+  /** Cell size in pixels */
+  cell: number;
+  /** Number of columns in the grid */
+  cols: number;
+  /** Number of rows in the grid */
+  rows: number;
+  /** Game speed - milliseconds per step */
+  stepMs: number;
+  /** Initial snake length */
+  initialSnakeLength: number;
+}
+
+/**
+ * UI-specific configuration options
+ */
+export interface DoomUIOptions {
+  /** Canvas element ID */
+  canvasId: string;
+  /** Game root container ID */
+  gameRootId: string;
+  /** UI root container ID */
+  uiRootId: string;
+}
+
+/**
+ * Application initialization options
+ * 
+ * @example
+ * ```typescript
+ * // Full configuration
+ * const app = new Application({
+ *   game: {
+ *     cell: 20,
+ *     cols: 20,
+ *     rows: 20,
+ *     stepMs: 600
+ *   },
+ *   ui: {
+ *     canvasId: 'board',
+ *     gameRootId: 'game-root',
+ *     uiRootId: 'ui-root'
+ *   }
+ * });
+ * 
+ * // Using defaults
+ * const app = new Application();
+ * 
+ * // Partial configuration
+ * const app = new Application({
+ *   game: { stepMs: 400 } // Faster game speed, other values use defaults
+ * });
+ * ```
+ */
+export interface ApplicationOptions {
+  /** Game configuration */
+  game?: GameOptions;
+  /** UI configuration */
+  ui?: DoomUIOptions;
 }
 
 /**
  * Facade over Model + View + Controller: DOM wiring, ads bridge, welcome flow.
  */
 export class Application {
-  cell: number;
-  cols: number;
-  rows: number;
-  stepMs: number;
-  canvasId: string;
-  scoreId: string;
-  startButtonId: string;
-  gameRootId: string;
-  uiRootId: string;
-  model: GameModel | null;
-  view: GameView | null;
-  controller: GameController | null;
+  protected gameOpts: GameOptions;
+  protected uiOpts: DoomUIOptions;
+
+  private game: Game | null;
   uiController: UIController | null;
   protected adsManager: AdsManager | null;
   private _playStarted: boolean;
 
   constructor(options: ApplicationOptions = {}) {
-    this.cell = options.cell ?? GAME_CONFIG.CELL_SIZE;
-    this.cols = options.cols ?? GAME_CONFIG.GRID_COLS;
-    this.rows = options.rows ?? GAME_CONFIG.GRID_ROWS;
-    this.stepMs = options.stepMs ?? GAME_CONFIG.STEP_MS;
-    this.canvasId = options.canvasId || 'board';
-    this.gameRootId = options.gameRootId || 'game-root';
-    this.uiRootId = options.uiRootId || 'ui-root';
+    // Game options
+    this.gameOpts = {
+        cell: GAME_CONFIG.CELL_SIZE,
+        cols: GAME_CONFIG.GRID_COLS,
+        rows: GAME_CONFIG.GRID_ROWS,
+        stepMs: GAME_CONFIG.STEP_MS,
+        initialSnakeLength: GAME_CONFIG.INITIAL_SNAKE_LENGTH,
+      ...options.game
+    };
+    
+    // UI options
+    this.uiOpts = {
+      canvasId: DOM_IDS.CANVAS,
+      gameRootId: DOM_IDS.GAME_ROOT,
+      uiRootId: DOM_IDS.UI_ROOT,
+      ...options.ui,
+    }
 
-    this.scoreId = options.scoreId || 'score';
-    this.startButtonId = options.startButtonId || 'btn-start-game';
-
-    this.model = null;
-    this.view = null;
-    this.controller = null;
+    this.game = null;
     this.uiController = null;
     this.adsManager = null;
-    this._playStarted = false;
-  }
-
-  onReturnToWelcome(): void {
-    this.adsManager?.resetAdsFlow();
-    this.uiController?.showWelcomeScreen();
     this._playStarted = false;
   }
 
@@ -69,64 +110,43 @@ export class Application {
     }
     this._playStarted = true;
     this.uiController?.showGame();
-    this.controller?.start();
+    this.game?.start();
   }
 
   init(): void {
     try {
-      this.adsManager = new AdsManager();
-      this.model = new GameModel(this.cols, this.rows);
-      
-      const canvas = document.getElementById(this.canvasId) as HTMLCanvasElement | null;
-      const scoreEl = document.getElementById(this.scoreId);
-      
-      if (!canvas) {
-        throw new Error(`Canvas element with id "${this.canvasId}" not found`);
-      }
-      
-      if (!(canvas instanceof HTMLCanvasElement)) {
-        throw new Error(`Element with id "${this.canvasId}" is not a canvas element`);
-      }
-      
-      this.view = new GameView(
-        canvas,
-        scoreEl,
-        this.cell,
-        this.cols,
-        this.rows
-      );
-      
-      this.controller = new GameController(this.model, this.view, this.stepMs);
-      this.controller.onReturnToWelcome = () => {
-        this.onReturnToWelcome();
-      };
-
       // Initialize UIController with callbacks
       this.uiController = new UIController(
-        this.uiRootId,
-        this.gameRootId,
+        this.uiOpts.uiRootId,
+        this.uiOpts.gameRootId,
         {
-          onStartGame: () => {
-            this.uiController?.showPreGameScreen();
-            this.adsManager?.runAdsThenStartGame()
-              .then(() => {
-                this.startFromAds();
-              })
-              .catch((error) => {
-                console.error('Ad flow failed:', error);
-                // Start game anyway if ads fail
-                this.startFromAds();
-              });
-          },
-          onCancelGame: () => {
-            this.uiController?.clear();
-          },
-          onShowHelp: () => {
-            this.uiController?.showHelpScreen();
-          },
-          onBackFromHelp: () => {
-            this.onReturnToWelcome();
-          }
+          onStartGame: this.onStartGame.bind(this),
+          onCancelGame: this.onCancelGame.bind(this),
+          onShowHelp: this.onShowHelp.bind(this),
+          onBackFromHelp: this.onBackFromHelp.bind(this),
+        }
+      );
+
+      this.adsManager = new AdsManager();
+
+      // Get canvas and score elements from UI controller
+      const { canvas, scoreElement } = this.uiController.getGameElements(
+        this.uiOpts.canvasId
+      );
+
+      // Initialize game with all required options
+      const gameOptions: Required<GameOptions> = {
+        cell: this.gameOpts.cell,
+        cols: this.gameOpts.cols,
+        rows: this.gameOpts.rows,
+        stepMs: this.gameOpts.stepMs,
+        initialSnakeLength: this.gameOpts.initialSnakeLength,
+      };
+
+      this.game = new Game(
+        canvas, scoreElement, gameOptions,
+        {
+          onReturnToWelcome: this.onReturnToWelcome.bind(this)
         }
       );
 
@@ -138,13 +158,43 @@ export class Application {
     }
   }
 
+  onStartGame(): void {
+    this.uiController?.showPreGameScreen();
+    this.adsManager?.runAdsThenStartGame()
+      .then(() => {
+        this.startFromAds();
+      })
+      .catch((error) => {
+        console.error('Ad flow failed:', error);
+        // Start game anyway if ads fail
+        this.startFromAds();
+      });
+  };
+
+  onCancelGame(): void {
+    this.uiController?.clear();
+  };
+
+  onShowHelp(): void {
+    this.uiController?.showHelpScreen();
+  };
+
+  onBackFromHelp(): void {
+    this.onReturnToWelcome();
+  }
+
+  onReturnToWelcome(): void {
+    this.adsManager?.resetAdsFlow();
+    this.uiController?.showWelcomeScreen();
+    this._playStarted = false;
+  }
+
   /**
    * Clean up resources and prevent memory leaks
    */
   destroy(): void {
-    this.controller?.destroy();
+    this.game?.destroy();
     this.adsManager?.resetAdsFlow();
-    this.model?.clear();
     this.uiController?.clear();
   }
 }

@@ -175,4 +175,30 @@ export class UIController {
   clear(): void {
     this.clearUIRoot();
   }
+
+  /**
+   * Get canvas and score elements from the DOM
+   * @param canvasId - Canvas element ID
+   * @returns Object containing canvas and score elements
+   * @throws Error if canvas element is not found or is not a canvas
+   */
+  getGameElements(
+    canvasId: string
+  ): {
+    canvas: HTMLCanvasElement;
+    scoreElement: HTMLElement | null;
+  } {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+    const scoreElement = document.getElementById('score');
+
+    if (!canvas) {
+      throw new Error(`Canvas element with id "${canvasId}" not found`);
+    }
+
+    if (!(canvas instanceof HTMLCanvasElement)) {
+      throw new Error(`Element with id "${canvasId}" is not a canvas element`);
+    }
+
+    return { canvas, scoreElement };
+  }
 }
